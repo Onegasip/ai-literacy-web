@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이야기 고르기</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/stories.css">
+</head>
+<body>
+  <main class="container">
+    <header class="page-header">
+      <a class="btn btn-ghost" href="../index.html">← 모둠 다시 고르기</a>
+      <span class="student-badge"></span>
+    </header>
+
+    <h1 class="stories-title">읽을 이야기를 골라요</h1>
+    <p class="stories-guide">내가 고른 이야기 번호가 <b>나의 번호</b>가 돼요.</p>
+
+    <div class="story-grid" id="storyGrid" aria-live="polite">
+      <!-- js/stories.js 가 data/stories/story1~4.json 을 읽어 카드를 만듭니다 -->
+    </div>
+  </main>
+
+  <script src="../js/db.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/stories.js"></script>
+</body>
+</html>

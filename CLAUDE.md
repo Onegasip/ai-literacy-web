@@ -27,6 +27,19 @@ groups/{1~6}/members/{1~4}    { strength, limit, updatedAt }   ← 학생 개인
 ## 콘텐츠 규칙
 - 스토리·정리·판단 사례 같은 내용은 `data/` 폴더의 JSON으로 분리한다. **코드에 하드코딩하지 않는다.**
 - 이야기 JSON의 `"mode"`: `"scenes"`면 클릭할 때마다 장면(이미지, 화자, 대사)이 넘어가고, `"video"`면 영상 재생.
+- 이야기 JSON 형식 (`data/stories/storyN.json`, 이미지 경로는 사이트 루트 기준):
+
+```json
+{
+  "id": 1,
+  "title": "카드 제목",
+  "intro": "카드에 보이는 한 줄 소개",
+  "mode": "scenes",
+  "scenes": [
+    { "image": "assets/img/story1-1.png", "speaker": "화자", "text": "대사" }
+  ]
+}
+```
 
 ## 사용자·디자인 규칙
 - 사용자는 초등 6학년: **한국어 UI, 큰 글씨, 큰 버튼**, 태블릿 기준 반응형.

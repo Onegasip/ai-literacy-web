@@ -1,0 +1,11 @@
+{
+  "id": 3,
+  "title": "이야기 3 (임시 제목)",
+  "intro": "AI와 함께하는 세 번째 이야기 (임시 소개)",
+  "mode": "scenes",
+  "scenes": [
+    { "image": "assets/img/story3-1.png", "speaker": "해설", "text": "이야기 3의 첫 번째 장면이에요. (더미 내용)" },
+    { "image": "assets/img/story3-2.png", "speaker": "민지", "text": "AI에게 도움을 받아 볼까? (더미 대사)" },
+    { "image": "assets/img/story3-3.png", "speaker": "AI", "text": "제가 도와드릴게요! (더미 대사)" }
+  ]
+}
