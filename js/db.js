@@ -99,7 +99,35 @@ const DB = (() => {
       .forEach((k) => localStorage.removeItem(k));
   }
 
+  /** 모둠 데이터(정리 + 1~4번) 지켜보기. 바뀔 때마다 callback({summary, members}) 호출.
+   *  지금: 5초마다 다시 읽기 + 같은 기기 다른 탭 변경(storage 이벤트)
+   *  Firebase: onSnapshot 실시간 구독으로 바꾸면 된다.
+   *  반환값: 지켜보기를 멈추는 함수 */
+  function watchGroup(group, callback, intervalMs = 5000) {
+    let last = '';
+    const tick = async () => {
+      const data = {
+        summary: readDoc(groupPath(group)),
+        members: await getGroupMembers(group),
+      };
+      const json = JSON.stringify(data);
+      if (json !== last) {
+        last = json;
+        callback(data);
+      }
+    };
+    const onStorage = (e) => { if (!e.key || e.key.startsWith(PREFIX)) tick(); };
+    tick();
+    const timer = setInterval(tick, intervalMs);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('storage', onStorage);
+    };
+  }
+
   return {
+    watchGroup,
     getMember,
     saveMember,
     getGroupMembers,

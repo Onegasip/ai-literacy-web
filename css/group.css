@@ -1,0 +1,117 @@
+/* student/group.html — 모둠 생각 모으기 */
+
+.group-main { max-width: 1200px; }
+.group-title { font-size: var(--fs-xl); }
+.section-title { font-size: var(--fs-lg); margin-bottom: 14px; }
+
+/* ---------- 친구 카드 1~4 ---------- */
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gap);
+}
+@media (max-width: 640px) {
+  .member-grid { grid-template-columns: 1fr; }
+}
+
+.member-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 22px;
+  border: 3px solid transparent;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.member-card.is-me {
+  border-color: var(--primary);
+  background: #f2f6ff;
+}
+
+.member-head { display: flex; align-items: center; gap: 12px; }
+.member-num {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 900;
+  font-size: var(--fs-lg);
+}
+.member-card.is-me .member-num { background: var(--primary); }
+.member-story { font-weight: 700; min-width: 0; }
+.me-tag {
+  margin-left: auto;
+  padding: 0.15em 0.7em;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.member-item { margin: 0; }
+.member-item dt { font-weight: 700; font-size: var(--fs-sm); }
+.member-item dt.strength { color: var(--strength); }
+.member-item dt.limit { color: var(--limit); }
+.member-item dd { margin: 2px 0 0; white-space: pre-line; }
+
+.member-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5em;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.member-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+.member-time { color: var(--ink-soft); font-size: var(--fs-sm); }
+.edit-btn { min-height: 52px; }
+
+.refresh-note { font-size: var(--fs-sm); margin: 10px 0 0; text-align: right; }
+
+/* ---------- 모둠 정리 ---------- */
+.summary-card { margin-top: calc(var(--gap) * 1.6); border-top: 6px solid var(--accent); }
+.summary-card .textarea { min-height: 6em; font-size: var(--fs-lg); }
+.summary-card .field-label { font-size: var(--fs-lg); }
+
+.recorder-note {
+  display: inline-block;
+  padding: 0.3em 0.9em;
+  border-radius: var(--radius-sm);
+  background: #fff3e6;
+  color: #a85a12;
+  font-weight: 700;
+}
+
+.textarea.is-invalid { border-color: var(--danger); background: #fff5f5; }
+.field-error { display: block; margin-top: 6px; color: var(--danger); font-weight: 700; }
+
+.summary-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.save-btn { min-width: 9em; font-size: var(--fs-lg); }
+.save-state { color: var(--ink-soft); font-weight: 700; }
+.save-state.is-saved { color: var(--strength); }
+.save-state.is-dirty { color: var(--limit); }

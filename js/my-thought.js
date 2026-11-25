@@ -100,6 +100,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  /* 페이지를 닫거나 새로고침할 때 저장 안 한 내용 경고 */
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty) { e.preventDefault(); e.returnValue = ''; }
+  });
+
   /* 모둠으로 — 저장 안 한 내용이 있으면 확인 */
   document.getElementById('groupBtn').addEventListener('click', async () => {
     if (dirty) {
@@ -107,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         okText: '그냥 넘어가기', cancelText: '돌아가기',
       });
       if (!ok) return;
+      dirty = false; // 브라우저 경고창이 또 뜨지 않게
     }
     goTo('student/group.html');
   });
