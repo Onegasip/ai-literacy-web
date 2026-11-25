@@ -1,0 +1,39 @@
+/* student/my-thought.html — 나의 생각(장점/한계) 쓰기 */
+
+.thought-main { max-width: 880px; }
+
+.thought-who {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 0.3em 1em;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+}
+.thought-title { font-size: var(--fs-xl); }
+
+.thought-form .textarea { min-height: 6.5em; font-size: var(--fs-lg); }
+.thought-form .field-label { font-size: var(--fs-lg); }
+
+.textarea.is-invalid { border-color: var(--danger); background: #fff5f5; }
+.field-error { display: block; margin-top: 6px; color: var(--danger); font-weight: 700; }
+
+.thought-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.save-btn { min-width: 9em; font-size: var(--fs-lg); }
+.save-state { color: var(--ink-soft); font-weight: 700; }
+.save-state.is-saved { color: var(--strength); }
+.save-state.is-dirty { color: var(--limit); }
+
+.next-box { margin-top: var(--gap); }
+.next-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+}

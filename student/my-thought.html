@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나의 생각 쓰기</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/my-thought.css">
+</head>
+<body>
+  <main class="container thought-main">
+    <header class="page-header">
+      <a class="btn btn-ghost" id="backBtn" href="stories.html">← 이야기 다시 보기</a>
+    </header>
+
+    <p class="thought-who" id="who"></p>
+    <h1 class="thought-title">이야기 속 AI는 어땠나요?</h1>
+
+    <form id="thoughtForm" class="card thought-form" novalidate>
+      <label class="field">
+        <span class="field-label strength">👍 AI가 잘한 점 (장점)</span>
+        <textarea class="textarea" id="strength" maxlength="300"
+          placeholder="예) AI는 많은 정보를 아주 빨리 찾아 주었어요."></textarea>
+        <span class="field-error" id="strengthError" hidden>잘한 점을 적어 주세요.</span>
+      </label>
+
+      <label class="field">
+        <span class="field-label limit">🤔 AI가 어려워한 점 (한계)</span>
+        <textarea class="textarea" id="limit" maxlength="300"
+          placeholder="예) AI는 친구의 기분까지는 잘 알지 못했어요."></textarea>
+        <span class="field-error" id="limitError" hidden>어려워한 점을 적어 주세요.</span>
+      </label>
+
+      <div class="thought-actions">
+        <span class="save-state" id="saveState" aria-live="polite"></span>
+        <button type="submit" class="btn btn-primary save-btn" id="saveBtn">저장하기</button>
+      </div>
+    </form>
+
+    <div class="next-box" id="nextBox" hidden>
+      <button type="button" class="btn btn-big next-btn" id="groupBtn">모둠 친구들과 생각 모으기 →</button>
+    </div>
+  </main>
+
+  <script src="../js/db.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/my-thought.js"></script>
+</body>
+</html>
