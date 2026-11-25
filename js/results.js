@@ -10,6 +10,15 @@ let watcher = null;
 
 const isDone = (m) => Boolean(m && (m.strength || m.limit));
 
+/** 작성 완료 / 참여 인원 — 참여 = 이야기를 고른 학생(+ 선택이 풀렸지만 글이 있는 학생) */
+function progressOf(members) {
+  const joined = members.filter((m) => m.claimedBy || isDone(m)).length;
+  const done = members.filter(isDone).length;
+  return { done, joined, full: joined > 0 && done === joined };
+}
+const progressText = ({ done, joined }) =>
+  joined === 0 ? '아직 고른 학생 없음' : `작성 완료 ${done}/${joined}명`;
+
 document.addEventListener('DOMContentLoaded', () => {
   if (!requireTeacher()) return;
 
@@ -40,6 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  $('detailBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-release]');
+    if (btn && openGroup) releaseMember(openGroup, Number(btn.dataset.release));
+  });
+
   $('detailClose').addEventListener('click', closeDetail);
   $('detail').addEventListener('click', (e) => { if (e.target.id === 'detail') closeDetail(); });
   document.addEventListener('keydown', (e) => {
@@ -53,13 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ---------- 카드 3×2 ---------- */
 function renderGrid() {
   $('resultGrid').innerHTML = allGroups.map(({ group, summary, members }) => {
-    const done = members.filter(isDone).length;
-    const full = done === MEMBER_COUNT;
+    const p = progressOf(members);
     return `
       <article class="group-card" data-g="${group}" tabindex="0" role="button" aria-label="${group}모둠 크게 보기">
         <div class="card-head">
           <h2 class="card-name">${group}모둠</h2>
-          <span class="progress-pill${full ? ' is-full' : ''}">작성 완료 ${done}/${MEMBER_COUNT}명</span>
+          <span class="progress-pill${p.full ? ' is-full' : ''}">${progressText(p)}</span>
         </div>
         ${isDone(summary) ? `
           <dl class="sum-item"><dt class="strength">👍 장점</dt><dd>${escapeHtml(summary.strength || '-')}</dd></dl>
@@ -94,7 +107,7 @@ function renderDetail(g) {
   const { summary, members } = data;
   const box = document.querySelector('.detail');
   box.style.setProperty('--gc', `var(--g${g})`);
-  $('detailTitle').textContent = `${g}모둠 — 작성 완료 ${members.filter(isDone).length}/${MEMBER_COUNT}명`;
+  $('detailTitle').textContent = `${g}모둠 — ${progressText(progressOf(members))}`;
 
   const item = (label, cls, text) =>
     `<dl class="sum-item"><dt class="${cls}">${label}</dt><dd>${escapeHtml(text || '-')}</dd></dl>`;
@@ -108,13 +121,34 @@ function renderDetail(g) {
     </div>
     <div class="detail-members">
       ${members.map((m) => `
-        <section class="member-box">
+        <section class="member-box${m.claimedBy ? '' : ' is-unclaimed'}">
           <h3>${m.member}번 <small>${isDone(m) ? formatTime(m.updatedAt) : ''}</small></h3>
           ${isDone(m)
             ? item('👍 장점', 'strength', m.strength) + item('🤔 한계', 'limit', m.limit)
-            : '<p class="sum-empty">아직 작성 중이에요</p>'}
+            : `<p class="sum-empty">${m.claimedBy ? '아직 작성 중이에요' : '아직 고른 학생이 없어요'}</p>`}
+          <div class="member-foot">
+            ${m.claimedBy
+              ? `<button type="button" class="btn btn-ghost release-btn" data-release="${m.member}">선택 풀기</button>`
+              : `<span class="claim-none">${isDone(m) ? '선택 풀림 — 학생이 다시 고를 수 있어요' : ''}</span>`}
+          </div>
         </section>`).join('')}
     </div>`;
+}
+
+/* ---------- 선택 풀기 (학생 한 명) ---------- */
+async function releaseMember(g, m) {
+  const ok = await confirmDialog(
+    `${g}모둠 ${m}번 학생의 이야기 선택을 풀까요?\n\n쓴 글은 그대로 남아요.\n그 학생은 이야기 선택 화면에서 다시 골라야 해요.`,
+    { okText: '선택 풀기', cancelText: '취소' }
+  );
+  if (!ok) return;
+  try {
+    await DB.releaseMember(g, m);
+    showToast(`${g}모둠 ${m}번 선택을 풀었어요`);
+  } catch (err) {
+    console.error(err);
+    showToast('선택을 풀지 못했어요. 연결을 확인해 주세요', 3000);
+  }
 }
 
 /* ---------- 초기화 ---------- */

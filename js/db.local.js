@@ -32,14 +32,44 @@ const DB = (() => {
     }
   }
 
+  /* claimedBy/claimedAt 은 남기고 합친다 (db.js의 merge 저장과 같게) */
   function writeDoc(path, data) {
     const doc = {
-      strength: data.strength || '',
-      limit: data.limit || '',
+      strength: String(data.strength || '').slice(0, 300),
+      limit: String(data.limit || '').slice(0, 300),
       updatedAt: Date.now(),
     };
-    localStorage.setItem(PREFIX + path, JSON.stringify(doc));
+    localStorage.setItem(PREFIX + path, JSON.stringify({ ...(readDoc(path) || {}), ...doc }));
     return doc;
+  }
+
+  const hasContent = (d) => Boolean(d && (d.strength || d.limit));
+
+  /** 이야기(번호) 고르기 — db.js claimMember와 같은 결과 형식 */
+  async function claimMember(group, member, deviceId) {
+    const docs = {};
+    for (let m = 1; m <= MEMBERS; m++) docs[m] = readDoc(memberPath(group, m));
+    const target = docs[member];
+    if (target?.claimedBy && target.claimedBy !== deviceId) return { ok: false, reason: 'taken' };
+    const mine = Object.keys(docs).map(Number).filter((m) => m !== member && docs[m]?.claimedBy === deviceId);
+    const locked = mine.find((m) => hasContent(docs[m]));
+    if (locked) return { ok: false, reason: 'locked', member: locked };
+    mine.forEach((m) => deleteDoc(memberPath(group, m)));
+    if (target?.claimedBy !== deviceId) {
+      localStorage.setItem(PREFIX + memberPath(group, member),
+        JSON.stringify({ ...(target || {}), claimedBy: deviceId, claimedAt: Date.now() }));
+    }
+    return { ok: true };
+  }
+
+  /** 선택 풀기 — 쓴 글은 남기고 claimedBy/claimedAt 만 지움 */
+  async function releaseMember(group, member) {
+    const path = memberPath(group, member);
+    const d = readDoc(path);
+    if (!d) return;
+    if (!hasContent(d)) { deleteDoc(path); return; }
+    const { claimedBy, claimedAt, ...rest } = d;
+    localStorage.setItem(PREFIX + path, JSON.stringify(rest));
   }
 
   function deleteDoc(path) {
@@ -179,6 +209,8 @@ const DB = (() => {
     watchAll,
     getMember,
     saveMember,
+    claimMember,
+    releaseMember,
     getGroupMembers,
     getGroupSummary,
     saveGroupSummary,

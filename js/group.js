@@ -6,13 +6,10 @@
 const RECORDER = 1; // 모둠 정리를 쓰는 번호
 
 document.addEventListener('DOMContentLoaded', () => {
-  const student = requireStudent();
+  const student = requireStudent(true);
   if (!student) return;
-  if (!student.member) {
-    goTo('student/stories.html');
-    return;
-  }
   const { group, member } = student;
+  const deviceId = getDeviceId();
   const isRecorder = member === RECORDER;
 
   document.getElementById('groupTitle').textContent = `${group}모둠 생각 모으기`;
@@ -83,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${done ? `
             <dl class="member-item"><dt class="strength">👍 장점</dt><dd>${escapeHtml(m.strength || '-')}</dd></dl>
             <dl class="member-item"><dt class="limit">🤔 한계</dt><dd>${escapeHtml(m.limit || '-')}</dd></dl>
-          ` : '<p class="member-empty">아직 작성 중이에요</p>'}
+          ` : `<p class="member-empty">${m.claimedBy ? '아직 작성 중이에요' : '아직 이 이야기를 고른 친구가 없어요'}</p>`}
           <div class="member-foot">
             <span class="member-time">${done ? formatTime(m.updatedAt) : ''}</span>
             ${me ? '<button type="button" class="btn btn-ghost edit-btn" data-act="edit">내 생각 고치기</button>' : ''}
@@ -144,14 +141,24 @@ document.addEventListener('DOMContentLoaded', () => {
         firstEmpty.focus();
         return;
       }
+      saveState.className = 'save-state';
+      saveState.textContent = '저장하는 중…';
       try {
         const doc = await DB.saveGroupSummary(group, data);
-        dirty = false;
-        setState('saved', doc.updatedAt);
-        showToast('모둠 정리를 저장했어요!');
+        // 저장하는 동안 글을 더 고쳤으면 '저장됨'이 아니다
+        const now = { strength: fields.strength.value.trim(), limit: fields.limit.value.trim() };
+        if (now.strength === data.strength && now.limit === data.limit) {
+          dirty = false;
+          setState('saved', doc.updatedAt);
+          showToast('모둠 정리를 저장했어요!');
+        } else {
+          setState('dirty');
+          showToast('고친 내용이 있어요. 한 번 더 저장해 주세요');
+        }
       } catch (err) {
         console.error(err);
-        showToast('저장하지 못했어요. 다시 눌러 주세요');
+        setState('dirty');
+        showToast('저장하지 못했어요. 연결을 확인하고 다시 눌러 주세요', 3000);
       }
     });
 
@@ -165,6 +172,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- 자동 새로고침 (DB.watchGroup) ---------- */
   DB.watchGroup(group, ({ summary, members }) => {
+    // 내 선택이 풀렸으면(선생님 [선택 풀기]·모둠 초기화) 이야기 다시 고르기
+    const me = members.find((m) => m.member === member);
+    if (me?.claimedBy !== deviceId) {
+      dirty = false;
+      leaveReleased();
+      return;
+    }
     renderMembers(members);
     renderSummary(summary);
   });

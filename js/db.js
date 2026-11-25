@@ -9,7 +9,8 @@
  *
  * 데이터 구조 (Firestore)
  *   groups/{1~6}                 { strength, limit, updatedAt }  모둠 정리
- *   groups/{1~6}/members/{1~4}   { strength, limit, updatedAt }  개인 생각
+ *   groups/{1~6}/members/{1~4}   { strength, limit, updatedAt, claimedBy, claimedAt }  개인 생각
+ *                                 claimedBy = 이 이야기(번호)를 고른 기기 ID, claimedAt = 고른 시각
  *   judge/{사례id}                { firstO, firstX, finalO, finalX, updatedAt }  O/X 인원
  *
  *   strength = 장점(능력), limit = 한계 (각 300자까지), updatedAt = 저장 시각(ms 숫자)
@@ -59,11 +60,14 @@ const DB = (() => {
     return range(MEMBERS).map((m) => ({ member: m, ...(byId[m] || {}) }));
   }
 
+  /* merge: members 문서의 claimedBy/claimedAt 을 지우지 않도록 바뀐 칸만 합친다 */
   async function writeThought(ref, { strength, limit }) {
     const doc = { strength: text(strength), limit: text(limit), updatedAt: Date.now() };
-    await ref.set(doc);
+    await ref.set(doc, { merge: true });
     return doc;
   }
+
+  const hasContent = (d) => Boolean(d && (d.strength || d.limit));
 
   /* ---------- 개인 생각 ---------- */
 
@@ -80,6 +84,47 @@ const DB = (() => {
   /** 모둠의 1~4번 개인 생각 → [{member, strength, limit, updatedAt} | {member} ...] */
   async function getGroupMembers(group) {
     return toMemberList(await membersCol(group).get());
+  }
+
+  /* ---------- 이야기(번호) 고르기 ---------- */
+
+  /** 기기가 모둠의 번호(=이야기)를 고른다. 트랜잭션이라 두 기기가 동시에 눌러도 한 명만 성공.
+   *  → {ok:true}
+   *  | {ok:false, reason:'taken'}             다른 기기가 이미 고름
+   *  | {ok:false, reason:'locked', member:n}  이 기기가 n번에 이미 글을 써서 바꿀 수 없음
+   *  이 기기가 고른 다른 번호에 글이 없으면 그 선택은 자동으로 풀린다. */
+  async function claimMember(group, member, deviceId) {
+    const refs = range(MEMBERS).map((m) => memberRef(group, m));
+    return fs.runTransaction(async (tx) => {
+      const snaps = await Promise.all(refs.map((r) => tx.get(r)));
+      const docs = snaps.map(docData);
+      const target = docs[member - 1];
+
+      if (target?.claimedBy && target.claimedBy !== deviceId) return { ok: false, reason: 'taken' };
+
+      const mine = range(MEMBERS).filter((m) => m !== member && docs[m - 1]?.claimedBy === deviceId);
+      const locked = mine.find((m) => hasContent(docs[m - 1]));
+      if (locked) return { ok: false, reason: 'locked', member: locked };
+
+      mine.forEach((m) => tx.delete(refs[m - 1]));   // 글 없는 예전 선택은 풀기
+      if (target?.claimedBy !== deviceId) {
+        tx.set(refs[member - 1], { claimedBy: deviceId, claimedAt: Date.now() }, { merge: true });
+      }
+      return { ok: true };
+    });
+  }
+
+  /** 선택 풀기 (교사): claimedBy/claimedAt 만 지우고 쓴 글은 남긴다. 글이 없으면 문서를 지운다. */
+  async function releaseMember(group, member) {
+    const ref = memberRef(group, member);
+    const d = docData(await ref.get());
+    if (!d) return;
+    if (hasContent(d)) {
+      const del = firebase.firestore.FieldValue.delete();
+      await ref.update({ claimedBy: del, claimedAt: del });
+    } else {
+      await ref.delete();
+    }
   }
 
   /* ---------- 모둠 정리 ---------- */
@@ -217,6 +262,8 @@ const DB = (() => {
     watchAll,
     getMember,
     saveMember,
+    claimMember,
+    releaseMember,
     getGroupMembers,
     getGroupSummary,
     saveGroupSummary,

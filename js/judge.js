@@ -5,12 +5,13 @@
 
 const $ = (id) => document.getElementById(id);
 const KEYS = ['firstO', 'firstX', 'finalO', 'finalX'];
-const MAX_COUNT = 99;
+const MAX_TOTAL = CLASS_SIZE; // 처음/최종 각각 O+X 최대 (common.js의 우리 반 인원)
 
 let cases = [];
 let index = 0;
 let record = null;   // 현재 사례의 O/X 기록
 let shownQ = 0;      // 공개한 질문 수
+let loading = true;  // O/X 기록 불러오는 중이면 +/− 잠금
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireTeacher()) return;
@@ -86,12 +87,26 @@ async function render() {
   $('thinkList').innerHTML = '';
   updateThinkBtn();
 
-  // O/X 기록
-  record = (await DB.getJudge(caseId(c))) || { firstO: 0, firstX: 0, finalO: 0, finalX: 0 };
+  // O/X 기록 — 불러오는 동안 +/− 잠금, 그 사이 다른 사례로 넘어갔으면 버림
+  const loadingIndex = index;
+  loading = true;
+  record = { firstO: 0, firstX: 0, finalO: 0, finalX: 0 };
+  renderCounts();
+  let loaded = null;
+  try {
+    loaded = await DB.getJudge(caseId(loadingIndex));
+  } catch (err) {
+    console.error(err);
+    if (loadingIndex === index) showToast('O/X 기록을 불러오지 못했어요', 3000);
+    return; // 잠금 유지 — 잘못된 숫자로 덮어쓰지 않게
+  }
+  if (loadingIndex !== index) return;
+  record = loaded || record;
+  loading = false;
   renderCounts();
 }
 
-const caseId = (c) => String(c.id ?? `case${index + 1}`);
+const caseId = (i) => String(cases[i].id ?? `case${i + 1}`);
 
 /* ---------- 생각해 볼 점 (하나씩 공개) ---------- */
 function questionsOf(c) {
@@ -136,26 +151,37 @@ function buildCounters() {
   });
 }
 
+/* 처음/최종 단계별 합계 (O+X) */
+const stageTotal = (key) => {
+  const stage = key.startsWith('first') ? 'first' : 'final';
+  return (record[`${stage}O`] || 0) + (record[`${stage}X`] || 0);
+};
+
 async function changeCount(key, step) {
-  const next = Math.min(MAX_COUNT, Math.max(0, (record[key] || 0) + step));
+  if (loading) return;
+  if (step > 0 && stageTotal(key) >= MAX_TOTAL) {
+    showToast(`O와 X를 합쳐 ${MAX_TOTAL}명까지 넣을 수 있어요`);
+    return;
+  }
+  const next = Math.max(0, (record[key] || 0) + step);
   if (next === record[key]) return;
   record = { ...record, [key]: next };
   renderCounts();
-  const savingIndex = index;
+  // 화면의 record가 기준. 저장 결과로 되돌려 쓰지 않는다 (빠르게 여러 번 눌러도 정확하게)
   try {
-    const saved = await DB.saveJudge(caseId(cases[savingIndex]), record);
-    if (savingIndex === index) record = saved; // 그 사이 다른 사례로 넘어갔으면 덮어쓰지 않음
+    await DB.saveJudge(caseId(index), record);
   } catch (err) {
     console.error(err);
-    showToast('저장하지 못했어요');
+    showToast('저장하지 못했어요. 연결을 확인해 주세요', 3000);
   }
 }
 
 function renderCounts() {
   KEYS.forEach((key) => {
-    const el = document.querySelector(`.counter[data-key="${key}"] [data-count]`);
-    el.textContent = record[key] || 0;
-    el.parentElement.querySelector('[data-step="-1"]').disabled = !record[key];
+    const counter = document.querySelector(`.counter[data-key="${key}"]`);
+    counter.querySelector('[data-count]').textContent = record[key] || 0;
+    counter.querySelector('[data-step="-1"]').disabled = loading || !record[key];
+    counter.querySelector('[data-step="1"]').disabled = loading || stageTotal(key) >= MAX_TOTAL;
   });
   renderCompare();
 }

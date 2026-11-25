@@ -157,3 +157,7 @@
 .member-box .sum-item + .sum-item { margin-top: 12px; }
 .detail .sum-item dd { display: block; -webkit-line-clamp: unset; overflow: visible; }
 .member-box .sum-empty { min-height: 4em; }
+.member-box.is-unclaimed { background: #f4f1ea; box-shadow: none; }
+.member-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+.release-btn { min-height: 52px; font-size: 0.7rem; padding: 0 0.9em; }
+.claim-none { color: var(--ink-soft); font-size: 0.65rem; }

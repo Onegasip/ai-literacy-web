@@ -14,7 +14,7 @@ service cloud.firestore {
     function isTime(v)  { return v is number && v > 0; }
     function isCount(v) { return v is int && v >= 0 && v <= 999; }
 
-    // 장점/한계 문서: strength, limit, updatedAt 세 필드만
+    // 모둠 정리 문서: strength, limit, updatedAt 세 필드만
     function validThought() {
       let d = request.resource.data;
       return d.keys().hasOnly(['strength', 'limit', 'updatedAt'])
@@ -22,6 +22,28 @@ service cloud.firestore {
           && isText(d.strength)
           && isText(d.limit)
           && isTime(d.updatedAt);
+    }
+
+    function isDeviceId(v) { return v is string && v.matches('^[A-Za-z0-9-]{8,64}$'); }
+
+    // 개인 생각 문서: 글(strength, limit, updatedAt) + 고른 기기(claimedBy, claimedAt)
+    // 이야기만 고른 상태({claimedBy, claimedAt})도 있으므로 각 필드는 있을 때만 검사
+    function validMember() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['strength', 'limit', 'updatedAt', 'claimedBy', 'claimedAt'])
+          && (!('strength' in d) || isText(d.strength))
+          && (!('limit' in d) || isText(d.limit))
+          && (!('updatedAt' in d) || isTime(d.updatedAt))
+          && (!('claimedBy' in d) || isDeviceId(d.claimedBy))
+          && (!('claimedAt' in d) || isTime(d.claimedAt));
+    }
+
+    // 고른 기기는 다른 기기로 바꿀 수 없다.
+    // 허용: 처음 고르기(기존 claimedBy 없음) / 그대로 두기 / 선택 풀기(claimedBy 지우기 — 교사 [선택 풀기])
+    function claimKept() {
+      return !('claimedBy' in resource.data)
+          || !('claimedBy' in request.resource.data)
+          || request.resource.data.claimedBy == resource.data.claimedBy;
     }
 
     // O/X 기록 문서: firstO, firstX, finalO, finalX, updatedAt 다섯 필드만
@@ -45,8 +67,9 @@ service cloud.firestore {
       match /members/{m} {
         allow get: if isGroup(g) && isMember(m);
         allow list: if isGroup(g);
-        allow create, update: if isGroup(g) && isMember(m) && validThought();
-        allow delete: if isGroup(g);              // 초기화 때 남은 문서까지 지울 수 있게
+        allow create: if isGroup(g) && isMember(m) && validMember();
+        allow update: if isGroup(g) && isMember(m) && validMember() && claimKept();
+        allow delete: if isGroup(g);              // 초기화, 글 없는 선택 바꾸기, 남은 문서 정리
       }
     }
 

@@ -35,9 +35,23 @@
 .story-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(31, 42, 68, 0.12); }
 .story-card:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
 
-/* 이미 고른 번호 표시 */
-.story-card.is-picked { border-color: var(--primary); }
-.story-card.is-picked .story-num { background: var(--primary); }
+/* 내 기기가 고른 이야기 */
+.story-card.is-mine { border-color: var(--primary); background: #f2f6ff; }
+.story-card.is-mine .story-num { background: var(--primary); }
+
+/* 다른 친구가 고른 이야기 — 누를 수 없음 */
+.story-card.is-taken { background: #eeebe3; box-shadow: none; cursor: not-allowed; }
+.story-card.is-taken .story-num { background: #a8a396; }
+.story-card.is-taken .story-name,
+.story-card.is-taken .story-intro { color: #8a8578; }
+
+.story-card:disabled { cursor: not-allowed; }
+.story-card.is-loading { opacity: 0.7; }
+
+.story-tag { margin-top: 0.5em; font-weight: 700; font-size: var(--fs-sm); }
+.tag-mine { color: var(--primary); }
+.tag-taken { color: #6f6a5e; }
+.tag-loading { color: var(--ink-soft); }
 
 .story-num {
   flex: none;
@@ -55,6 +69,5 @@
 .story-body { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .story-name { font-size: var(--fs-lg); font-weight: 700; margin: 0 0 0.3em; }
 .story-intro { color: var(--ink-soft); margin: 0; }
-.story-picked-tag { margin-top: 0.5em; color: var(--primary); font-weight: 700; font-size: var(--fs-sm); }
 
 .story-card.is-error .story-intro { color: var(--danger); }

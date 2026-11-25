@@ -27,15 +27,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const student = requireStudent();
   if (!student) return;
 
-  const id = parseInt(getParam('id'), 10);
+  // id는 숫자만, 1~MEMBER_COUNT (1abc 같은 주소는 막기)
+  const raw = getParam('id') || '';
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   if (!(id >= 1 && id <= MEMBER_COUNT)) {
     goTo('student/stories.html');
     return;
   }
-  // 이야기 번호 = 학생 번호
+  // 이야기 번호 = 학생 번호. 이야기 선택 화면에서 고른(claim) 이야기만 볼 수 있다
   if (student.member !== id) {
-    setStudent({ member: id });
-    renderStudentBadge();
+    setFlash('이야기 선택 화면에서 이야기를 골라 주세요');
+    goTo('student/stories.html');
+    return;
+  }
+  if ((await checkClaim(student)) === false) {
+    leaveReleased();
+    return;
   }
 
   let story;

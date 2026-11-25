@@ -6,39 +6,100 @@
 const GROUP_COUNT = 6;
 const MEMBER_COUNT = 4;
 
+/* 우리 반 인원 — 판단 O/X 입력에서 처음/최종 각각 O+X가 이 수를 넘지 않게 */
+const CLASS_SIZE = 20;
+
 /* 교사 페이지 진입 비밀번호 (수업용 간단 잠금, 보안 기능 아님) */
 const TEACHER_PASSWORD = '1234';
 
 /* 현재 페이지가 하위 폴더(student/, teacher/)에 있으면 '../', 아니면 '' */
 const ROOT = /\/(student|teacher)\/[^/]*$/.test(location.pathname) ? '../' : '';
 
-/* ---------- 학생 정보 (sessionStorage, 개인정보 없음) ---------- */
+/* ---------- 기기 설정 (localStorage) ----------
+ * DB 데이터는 db.js에만. 여기서는 이 기기의 설정(학생 정보, 기기 ID)만 localStorage에 둔다.
+ * 개인정보 없음: 모둠 번호 + 학생 번호 + 무작위 기기 ID */
 const STUDENT_KEY = 'ailit-student';
+const DEVICE_KEY = 'ailit-device';
+
+function readLocal(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+}
+function writeLocal(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* 저장 불가 기기 */ }
+}
+
+/** 이 기기의 고유 ID (처음 한 번 만들어 계속 사용) */
+function getDeviceId() {
+  let id = readLocal(DEVICE_KEY);
+  if (typeof id !== 'string' || !/^[A-Za-z0-9-]{8,64}$/.test(id)) {
+    id = (crypto.randomUUID ? crypto.randomUUID()
+      : Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''));
+    writeLocal(DEVICE_KEY, id);
+  }
+  return id;
+}
 
 /** 모둠·번호 저장. 일부만 넘기면 기존 값과 합친다. 예) setStudent({group: 3}) */
 function setStudent(info) {
   const next = { ...getStudent(), ...info };
-  sessionStorage.setItem(STUDENT_KEY, JSON.stringify(next));
+  writeLocal(STUDENT_KEY, next);
   return next;
 }
 
 /** → {group, member} (없으면 빈 객체) */
 function getStudent() {
-  try {
-    return JSON.parse(sessionStorage.getItem(STUDENT_KEY)) || {};
-  } catch (e) {
-    return {};
-  }
+  return readLocal(STUDENT_KEY) || {};
 }
 
-/** 필요한 정보가 없으면 첫 화면으로 보낸다. needMember=true면 번호까지 확인 */
+/** 필요한 정보가 없으면 안내와 함께 돌려보낸다.
+ *  모둠이 없으면 첫 화면, needMember=true인데 번호가 없으면 이야기 선택 화면 */
 function requireStudent(needMember = false) {
   const s = getStudent();
-  if (!s.group || (needMember && !s.member)) {
+  if (!s.group) {
+    setFlash('모둠을 먼저 골라 주세요');
     location.href = ROOT + 'index.html';
     return null;
   }
+  if (needMember && !s.member) {
+    setFlash('이야기를 먼저 골라 주세요');
+    location.href = ROOT + 'student/stories.html';
+    return null;
+  }
   return s;
+}
+
+/** 이 기기가 지금 고른 번호를 아직 가지고 있는지 DB에서 확인.
+ *  → true(내 선택 맞음) / false(풀렸거나 다른 기기 것) / null(연결 실패 — 막지 않음) */
+async function checkClaim(student) {
+  try {
+    const doc = await DB.getMember(student.group, student.member);
+    return doc?.claimedBy === getDeviceId();
+  } catch (e) {
+    console.warn('[선택 확인 실패]', e);
+    return null;
+  }
+}
+
+/** 선택이 풀렸을 때: 번호 지우고 이야기 선택 화면으로 */
+function leaveReleased() {
+  setStudent({ member: null });
+  setFlash('이야기 선택이 풀렸어요. 이야기를 다시 골라 주세요.');
+  location.href = ROOT + 'student/stories.html';
+}
+
+/* ---------- 다음 페이지에 보여줄 안내 (페이지를 옮겨도 남게) ---------- */
+const FLASH_KEY = 'ailit-flash';
+function setFlash(msg) {
+  try { sessionStorage.setItem(FLASH_KEY, msg); } catch (e) { /* 무시 */ }
+}
+function showFlash() {
+  try {
+    const msg = sessionStorage.getItem(FLASH_KEY);
+    if (msg) {
+      sessionStorage.removeItem(FLASH_KEY);
+      showToast(msg, 3000);
+    }
+  } catch (e) { /* 무시 */ }
 }
 
 /* ---------- 교사 ---------- */
@@ -54,6 +115,7 @@ function teacherLogin(pw) {
 
 function requireTeacher() {
   if (sessionStorage.getItem(TEACHER_KEY) !== 'ok') {
+    setFlash('선생님 비밀번호를 입력해 주세요');
     location.href = ROOT + 'index.html';
     return false;
   }
@@ -172,4 +234,7 @@ function renderStudentBadge() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', renderStudentBadge);
+document.addEventListener('DOMContentLoaded', () => {
+  renderStudentBadge();
+  showFlash();
+});

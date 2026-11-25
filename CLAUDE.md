@@ -15,18 +15,21 @@
 - DB 관련 코드는 **`js/db.js` 한 파일에만** 둔다. 현재 **Firebase Firestore** 버전(프로젝트 `ai-literacy-web`).
 - Firebase는 CDN **compat** SDK(`firebase-app-compat`, `firebase-firestore-compat`, 10.12.2)를 쓴다. 모든 html에서 SDK 두 줄 → `db.js` → `common.js` → 페이지 js 순서로 불러온다.
 - `js/db.local.js`는 예전 localStorage 버전 백업. Firebase 없이 시험할 때 SDK 두 줄과 db.js 대신 불러오면 된다.
-- 다른 js는 `DB.함수()`만 쓰고 Firestore/localStorage를 직접 쓰지 않는다. db 함수는 모두 `async`.
+- DB 데이터는 `DB.함수()`로만 다루고 Firestore를 직접 쓰지 않는다. db 함수는 모두 `async`.
+- localStorage는 **기기 설정만** `js/common.js`에서 쓴다: 학생 모둠·번호(`setStudent`/`getStudent`), 기기 ID(`getDeviceId`). 다른 파일에서 직접 쓰지 않는다.
 - 실시간 화면은 `DB.watchGroup` / `DB.watchAll`(onSnapshot)로 받는다. 반환값은 멈추는 함수, `.refresh()`로 다시 받기.
 - 보안 규칙은 `firestore.rules`. 고치면 Firebase 콘솔 → Firestore → 규칙에 붙여넣고 [게시]. 글자 수 제한(300자)·인원 제한(0~999)은 db.js 상수와 맞춘다.
 - 회차(세션) 기능은 없다. 데이터 구조:
 
 ```
 groups/{1~6}                  { strength, limit, updatedAt }   ← 모둠이 정리한 장점/한계
-groups/{1~6}/members/{1~4}    { strength, limit, updatedAt }   ← 학생 개인 생각
+groups/{1~6}/members/{1~4}    { strength, limit, updatedAt, claimedBy, claimedAt }   ← 학생 개인 생각 + 고른 기기
 judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt }  ← AI 활용 판단 O/X 인원(처음/최종)
 ```
 - 전체 초기화(`DB.resetAll`)와 CSV 내보내기는 모둠 결과 + judge 기록을 모두 포함한다.
 - 필드: `strength` = 장점(능력, 300자까지), `limit` = 한계(300자까지), `updatedAt` = 저장 시각(ms 숫자). 입력칸 `maxlength`도 300.
+- `claimedBy` = 이야기를 고른 기기 ID, `claimedAt` = 고른 시각. 교사 results 크게 보기의 [선택 풀기]는 이 두 필드만 지우고 글은 남긴다. 모둠 초기화는 선택도 함께 지운다.
+- 판단 O/X는 처음·최종 각각 O+X ≤ `CLASS_SIZE`(common.js, 기본 20).
 - (db.local.js에서는 localStorage 키 = 위 경로 앞에 `ailit:`)
 
 ## 콘텐츠 규칙
@@ -55,7 +58,7 @@ judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt }  
 - 사용자는 초등 6학년: **한국어 UI, 큰 글씨, 큰 버튼**, 태블릿 기준 반응형.
 - 교사 페이지는 TV에 띄울 발표용 → `<body class="teacher">`로 글씨를 더 크게.
 - **개인정보(이름 등)는 저장하지 않는다.** 모둠 번호 + 학생 번호만 쓴다.
-- 학생의 모둠·번호는 sessionStorage에 저장하고, `js/common.js`의 `setStudent()` / `getStudent()`로만 다룬다.
+- 학생의 모둠·번호는 localStorage에 저장하고(탭을 닫아도 유지), `js/common.js`의 `setStudent()` / `getStudent()`로만 다룬다.
 - 교사 비밀번호는 `js/common.js`의 `TEACHER_PASSWORD` 상수. 수업용 간단 잠금일 뿐 보안 기능이 아니다.
 
 ## 폴더 구조
@@ -71,7 +74,7 @@ assets/img/
 
 ## 페이지 흐름
 1. `index.html`: 웹 제목 + 1~6모둠 선택 버튼. 오른쪽 아래 [결과 모아보기] 버튼(교사용, 비밀번호 입력 후 진입)
-2. `student/stories.html`: 이야기 1~4 선택. **고른 이야기 번호 = 학생 번호**. 모둠/번호는 sessionStorage에 저장
+2. `student/stories.html`: 이야기 1~4 선택. **고른 이야기 번호 = 학생 번호**. 같은 모둠에서 한 이야기는 한 기기만 고른다(`DB.claimMember`, 트랜잭션). 다른 기기가 고른 카드는 "○번 친구가 골랐어요" + 비활성화. 아직 글을 안 썼으면 다른 이야기로 바꿀 수 있고, 썼으면 교사 [선택 풀기]가 필요
 3. `student/story.html?id=N`: 이야기 보기 (scenes / video)
 4. `student/my-thought.html`: 내가 찾은 AI의 장점(능력)과 한계 작성 후 저장
 5. `student/group.html`: 이야기 1~4별 칸(자기 번호 칸만 작성, 다른 칸은 보기만) + "우리 모둠이 정리한 장점/한계" 공동 칸
