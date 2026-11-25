@@ -131,7 +131,7 @@ async function resetGroup(g) {
 
 async function resetAll() {
   const ok = await confirmDialog(
-    `1~${GROUP_COUNT}모둠의 모든 결과를 지울까요?\n되돌릴 수 없어요.\n\n초기화 전에 결과 내보내기를 먼저 하세요.`,
+    `1~${GROUP_COUNT}모둠의 모든 결과와\nAI 활용 판단 O/X 기록을 모두 지울까요?\n되돌릴 수 없어요.\n\n초기화 전에 결과 내보내기를 먼저 하세요.`,
     { okText: '전체 초기화', cancelText: '취소', danger: true }
   );
   if (!ok) return;
@@ -158,6 +158,29 @@ async function exportCSV() {
       rows.push([`${group}모둠`, `${m.member}번`, m.strength, m.limit, fullTime(m.updatedAt)]);
     });
   });
+
+  // AI 활용 판단 O/X 기록 (judge-cases.json 순서대로, 사례 제목 함께)
+  const judges = await DB.getAllJudges();
+  let cases = [];
+  try {
+    const data = await loadJSON('data/judge-cases.json');
+    cases = Array.isArray(data.cases) ? data.cases : [];
+  } catch (e) {
+    console.warn('judge-cases.json 읽기 실패 — 사례 id만 내보냅니다', e);
+  }
+  const ids = cases.map((c, i) => String(c.id ?? `case${i + 1}`));
+  Object.keys(judges).forEach((id) => { if (!ids.includes(id)) ids.push(id); });
+
+  if (ids.length) {
+    rows.push([]);
+    rows.push(['AI 활용 판단', '사례', '처음 O', '처음 X', '최종 O', '최종 X', '수정시각']);
+    ids.forEach((id) => {
+      const c = cases.find((x, i) => String(x.id ?? `case${i + 1}`) === id);
+      const j = judges[id] || {};
+      rows.push([id, c?.title || '', j.firstO ?? '', j.firstX ?? '', j.finalO ?? '', j.finalX ?? '', fullTime(j.updatedAt)]);
+    });
+  }
+
   downloadCSV(`${todayStamp()}_AI리터러시_결과.csv`, rows);
   showToast('CSV 파일을 내려받았어요');
 }

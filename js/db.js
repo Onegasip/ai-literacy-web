@@ -7,6 +7,7 @@
  * 데이터 구조 (Firestore 경로와 같음)
  *   groups/{1~6}                 { strength, limit, updatedAt }  모둠 정리
  *   groups/{1~6}/members/{1~4}   { strength, limit, updatedAt }  개인 생각
+ *   judge/{사례id}                { firstO, firstX, finalO, finalX, updatedAt }  O/X 인원
  *
  *   strength = 장점(능력), limit = 한계, updatedAt = 저장 시각(ms)
  *   localStorage 키 = "ailit:" + 경로
@@ -92,11 +93,43 @@ const DB = (() => {
     for (let m = 1; m <= MEMBERS; m++) deleteDoc(memberPath(group, m));
   }
 
-  /** 전체 초기화 (이 앱의 "ailit:" 키만 삭제) */
+  /** 전체 초기화 (이 앱의 "ailit:" 키만 삭제 — 모둠 결과 + judge 기록 모두) */
   async function resetAll() {
     Object.keys(localStorage)
       .filter((k) => k.startsWith(PREFIX))
       .forEach((k) => localStorage.removeItem(k));
+  }
+
+  /* ---------- AI 활용 판단 O/X 기록 (judge/{사례id}) ---------- */
+  const judgePath = (caseId) => `judge/${caseId}`;
+  const toCount = (n) => Math.max(0, Math.floor(Number(n) || 0));
+
+  /** 사례 하나의 O/X 기록 → {firstO, firstX, finalO, finalX, updatedAt} 또는 null */
+  async function getJudge(caseId) {
+    return readDoc(judgePath(caseId));
+  }
+
+  /** 사례 O/X 기록 저장 (0 이상의 정수로 정리) */
+  async function saveJudge(caseId, { firstO, firstX, finalO, finalX }) {
+    const doc = {
+      firstO: toCount(firstO),
+      firstX: toCount(firstX),
+      finalO: toCount(finalO),
+      finalX: toCount(finalX),
+      updatedAt: Date.now(),
+    };
+    localStorage.setItem(PREFIX + judgePath(caseId), JSON.stringify(doc));
+    return doc;
+  }
+
+  /** 모든 사례 기록 → { 사례id: {...}, ... } (CSV 내보내기용) */
+  async function getAllJudges() {
+    const result = {};
+    const head = PREFIX + 'judge/';
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith(head))
+      .forEach((k) => { result[k.slice(head.length)] = readDoc(k.slice(PREFIX.length)); });
+    return result;
   }
 
   /** 모둠 데이터(정리 + 1~4번) 지켜보기. 바뀔 때마다 callback({summary, members}) 호출.
@@ -151,5 +184,8 @@ const DB = (() => {
     getAllGroups,
     resetGroup,
     resetAll,
+    getJudge,
+    saveJudge,
+    getAllJudges,
   };
 })();

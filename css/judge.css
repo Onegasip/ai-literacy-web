@@ -1,0 +1,158 @@
+/* teacher/judge.html — AI 활용 판단 사례 (TV 발표용) */
+
+:root {
+  --o: #2f6fdf;  /* O */
+  --x: #d94545;  /* X */
+}
+
+.error-text { color: var(--danger); font-weight: 700; }
+
+.judge-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.judge-page-title { margin: 0; font-size: var(--fs-lg); color: var(--ink-soft); }
+.judge-progress { font-size: var(--fs-xl); font-weight: 900; font-variant-numeric: tabular-nums; }
+
+/* ---------- 사례: 그림 | 설명 ---------- */
+.case {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: calc(var(--gap) * 1.2);
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  .case { grid-template-columns: 1fr; }
+}
+
+.case-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 56vh;
+  border-radius: var(--radius);
+  background: #1f2a44;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.case-media img { width: 100%; height: 100%; object-fit: contain; }
+.media-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(45deg, #d9d6ce 0 18px, #d2cfc6 18px 36px);
+  color: #6f6a5e;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.case-title { font-size: var(--fs-xl); margin-bottom: 0.3em; }
+.case-situation { font-size: var(--fs-lg); line-height: 1.55; white-space: pre-line; }
+
+/* ---------- 생각해 볼 점 ---------- */
+.think { margin-top: 12px; }
+.think-btn { background: #fff3e6; color: #a85a12; font-size: var(--fs-base); }
+.think-btn:disabled { opacity: 0.6; }
+
+.think-list { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 12px; }
+.think-list li {
+  display: flex;
+  gap: 0.6em;
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border-left: 8px solid var(--accent);
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  animation: think-in 0.35s ease;
+}
+.think-list .q-num { color: var(--accent); flex: none; }
+@keyframes think-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- O/X 기록 ---------- */
+.vote { margin-top: calc(var(--gap) * 1.2); padding: 22px 28px; }
+.vote-title { font-size: var(--fs-lg); margin-bottom: 14px; }
+.vote-title small { font-weight: 400; color: var(--ink-soft); font-size: 0.7em; }
+
+.vote-rows { display: grid; gap: 14px; }
+.vote-row {
+  display: grid;
+  grid-template-columns: 6em 1fr 1fr;
+  align-items: center;
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .vote-row { grid-template-columns: 1fr 1fr; }
+  .stage-name { grid-column: 1 / -1; }
+}
+.stage-name { font-weight: 900; }
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: #f4f1ea;
+}
+.counter .ox {
+  width: 1.6em;
+  text-align: center;
+  font-size: var(--fs-xl);
+  font-weight: 900;
+  line-height: 1;
+}
+.counter[data-key$="O"] .ox { color: var(--o); }
+.counter[data-key$="X"] .ox { color: var(--x); }
+.counter .count {
+  min-width: 2.2em;
+  text-align: center;
+  font-size: var(--fs-xl);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.counter .count::after { content: '명'; font-size: 0.5em; margin-left: 2px; color: var(--ink-soft); }
+.counter .step {
+  min-height: 64px;
+  min-width: 64px;
+  padding: 0;
+  font-size: var(--fs-lg);
+}
+
+/* ---------- 처음 vs 최종 막대 ---------- */
+.compare { margin-top: 22px; padding-top: 18px; border-top: 3px dashed var(--line); }
+.compare-title { font-size: var(--fs-base); margin-bottom: 12px; }
+.bars { display: grid; gap: 12px; }
+.bar-row { display: grid; grid-template-columns: 6em 1fr; align-items: center; gap: 20px; }
+.bar-label { font-weight: 900; }
+.bar {
+  display: flex;
+  height: 1.8em;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--line);
+}
+.bar span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  transition: width 0.4s ease;
+}
+.bar .bar-o { background: var(--o); }
+.bar .bar-x { background: var(--x); }
+
+/* ---------- 이전/다음 ---------- */
+.judge-nav { display: flex; justify-content: space-between; margin-top: var(--gap); }
+.nav-btn { min-width: 8em; }

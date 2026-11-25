@@ -20,7 +20,9 @@
 ```
 groups/{1~6}                  { strength, limit, updatedAt }   ← 모둠이 정리한 장점/한계
 groups/{1~6}/members/{1~4}    { strength, limit, updatedAt }   ← 학생 개인 생각
+judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt }  ← AI 활용 판단 O/X 인원(처음/최종)
 ```
+- 전체 초기화(`DB.resetAll`)와 CSV 내보내기는 모둠 결과 + judge 기록을 모두 포함한다.
 - 필드: `strength` = 장점(능력), `limit` = 한계, `updatedAt` = 저장 시각(ms)
 - localStorage 키는 위 경로 앞에 `ailit:`를 붙인다. (예: `ailit:groups/3/members/2`)
 
@@ -43,6 +45,7 @@ groups/{1~6}/members/{1~4}    { strength, limit, updatedAt }   ← 학생 개인
 - `role`: 이름표 색 — `"narrator"`(해설) / `"student"`(학생) / `"ai"`(AI). 없으면 화자 이름으로 추측.
 - `image`가 없거나 못 읽으면 "그림 준비 중" 회색 박스로 대신 보인다.
 - 정리 JSON 형식 (`data/summary.json`): `title`, `abilities`(능력)·`limits`(한계) 배열의 각 항목 `{ "keyword": "키워드", "desc": "한 줄 설명", "stories": [2] }`, `conclusion`(맨 아래 핵심 문장). 항목 개수는 자유.
+- 판단 사례 JSON 형식 (`data/judge-cases.json`): `title`, `cases` 배열의 각 항목 `{ "id": "case1", "title": "...", "situation": "과제 설명", "image": "assets/img/judge1.png", "questions": ["질문1", "질문2", "질문3"] }`. 정답은 넣지 않는다. `id`는 O/X 기록 저장 키라서 수업 중에는 바꾸지 않는다.
 - 영상 모드: `"mode": "video"`, `"video": "assets/video/story1.mp4"`, (선택) `"poster": "assets/img/story1-poster.png"`. 영상이 끝나면(또는 영상이 없으면) [적으러 가기] 버튼이 나온다.
 
 ## 사용자·디자인 규칙
