@@ -1,0 +1,129 @@
+/* student/story.html — 이야기 보기 (장면 / 영상) */
+
+:root {
+  --role-narrator: #6b7385;  /* 해설 */
+  --role-student: #2f6fdf;   /* 학생 */
+  --role-ai: #8a4fd8;        /* AI */
+}
+
+.story-main { max-width: 1000px; padding-bottom: 40px; }
+.story-header { margin-bottom: 12px; }
+
+.story-progress {
+  font-size: var(--fs-lg);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.story-title { font-size: var(--fs-xl); text-align: center; margin-bottom: 12px; }
+
+.progress-bar {
+  height: 10px;
+  margin-bottom: 20px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.progress-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--primary);
+  border-radius: inherit;
+  transition: width 0.25s;
+}
+
+/* ---------- 장면 ---------- */
+.scene-stage {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.scene-stage.is-last { cursor: default; }
+
+/* 이미지·영상 자리 — 크기를 고정해 그림이 없어도 레이아웃이 안 깨진다 */
+.scene-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 52vh;
+  border-radius: var(--radius);
+  background: #1f2a44;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.scene-media img,
+.scene-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* 그림/영상이 없을 때 */
+.media-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(45deg, #d9d6ce 0 18px, #d2cfc6 18px 36px);
+  color: #6f6a5e;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.scene-talk {
+  position: relative;
+  margin-top: 28px;
+  padding: 36px 28px 24px;
+  min-height: 7em;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border-top: 6px solid var(--role-color, var(--role-narrator));
+}
+
+.speaker-tag {
+  position: absolute;
+  top: -22px;
+  left: 24px;
+  padding: 0.25em 1em;
+  border-radius: 999px;
+  background: var(--role-color, var(--role-narrator));
+  color: #fff;
+  font-weight: 900;
+  font-size: var(--fs-lg);
+}
+.speaker-tag:empty { display: none; }
+
+.scene-talk[data-role="narrator"] { --role-color: var(--role-narrator); }
+.scene-talk[data-role="student"]  { --role-color: var(--role-student); }
+.scene-talk[data-role="ai"]       { --role-color: var(--role-ai); }
+.scene-talk[data-role="narrator"] .scene-text { color: var(--ink-soft); }
+
+.scene-text { font-size: var(--fs-lg); margin: 0; white-space: pre-line; }
+
+.tap-hint { text-align: center; color: var(--ink-soft); font-size: var(--fs-sm); margin: 12px 0 0; }
+
+/* ---------- 아래 버튼 ---------- */
+.story-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+}
+.nav-btn { min-width: 8em; font-size: var(--fs-lg); }
+.finish-btn { flex: 1; max-width: 640px; margin-left: auto; background: var(--accent); }
+
+/* 영상 모드: [다음]/[이전] 없이 끝나면 버튼만 가운데 */
+.story-nav.video-only { justify-content: center; }
+.story-nav.video-only .finish-btn { margin-left: 0; }
+
+.error-text { font-size: var(--fs-lg); font-weight: 700; color: var(--danger); }
+
+@media (max-width: 600px) {
+  .nav-btn { min-width: 0; flex: 1; }
+  .finish-btn { flex-basis: 100%; }
+  .story-nav { flex-wrap: wrap; }
+}

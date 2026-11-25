@@ -36,10 +36,13 @@ groups/{1~6}/members/{1~4}    { strength, limit, updatedAt }   ← 학생 개인
   "intro": "카드에 보이는 한 줄 소개",
   "mode": "scenes",
   "scenes": [
-    { "image": "assets/img/story1-1.png", "speaker": "화자", "text": "대사" }
+    { "image": "assets/img/story1-1.png", "role": "student", "speaker": "화자", "text": "대사" }
   ]
 }
 ```
+- `role`: 이름표 색 — `"narrator"`(해설) / `"student"`(학생) / `"ai"`(AI). 없으면 화자 이름으로 추측.
+- `image`가 없거나 못 읽으면 "그림 준비 중" 회색 박스로 대신 보인다.
+- 영상 모드: `"mode": "video"`, `"video": "assets/video/story1.mp4"`, (선택) `"poster": "assets/img/story1-poster.png"`. 영상이 끝나면(또는 영상이 없으면) [적으러 가기] 버튼이 나온다.
 
 ## 사용자·디자인 규칙
 - 사용자는 초등 6학년: **한국어 UI, 큰 글씨, 큰 버튼**, 태블릿 기준 반응형.
