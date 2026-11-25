@@ -56,7 +56,9 @@ judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt }  
 
 ## 사용자·디자인 규칙
 - 사용자는 초등 6학년: **한국어 UI, 큰 글씨, 큰 버튼**, 태블릿 기준 반응형.
-- 교사 페이지는 TV에 띄울 발표용 → `<body class="teacher">`로 글씨를 더 크게.
+- 교사 페이지는 TV에 띄울 발표용 → `<html class="teacher">` + `<body class="teacher">` (html에도 있어야 rem 기준이 커짐). 글씨는 화면 높이에 맞춰 20~30px(1920×1080 ≈ 30px, 1366×768 ≈ 20px).
+- 화면 맞춤 목표: 1024×768, 1366×768, 1920×1080에서 스크롤 없이 핵심 버튼·O/X·6모둠이 보이게. 교사 결과·판단은 `.fit-screen`(100dvh) + `.fit-fill`, 학생 이야기·내 생각은 가로 화면에서 버튼 줄을 아래에 고정.
+- 그리드 칸은 `minmax(0, 1fr)`, 본문은 `overflow-wrap: anywhere` — 띄어쓰기 없는 긴 글로 가로 넘침 방지.
 - **개인정보(이름 등)는 저장하지 않는다.** 모둠 번호 + 학생 번호만 쓴다.
 - 학생의 모둠·번호는 localStorage에 저장하고(탭을 닫아도 유지), `js/common.js`의 `setStudent()` / `getStudent()`로만 다룬다.
 - 교사 비밀번호는 `js/common.js`의 `TEACHER_PASSWORD` 상수. 수업용 간단 잠금일 뿐 보안 기능이 아니다.

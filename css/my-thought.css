@@ -32,6 +32,31 @@
 .save-state.is-dirty { color: var(--limit); }
 
 .next-box { margin-top: var(--gap); }
+
+/* 가로 화면(1024×768, 1366×768): 입력칸을 낮추고 저장 버튼 줄을 화면 아래에 붙인다
+ * (태블릿 키보드가 올라와도 저장 버튼이 입력칸 바로 아래에 보이도록) */
+@media (orientation: landscape) and (max-height: 820px) {
+  .thought-main { padding-top: 12px; }
+  .thought-main .page-header { margin-bottom: 8px; }
+  .thought-main .page-header .btn { min-height: 52px; }
+  .thought-who { margin-bottom: 6px; }
+  .thought-title { font-size: var(--fs-lg); margin-bottom: 10px; }
+  .thought-form { padding: 18px 22px 0; }
+  .thought-form .field { margin-bottom: 12px; }
+  .thought-form .textarea { min-height: 3.6em; }
+  .thought-actions {
+    position: sticky;
+    bottom: 0;
+    margin: 0 -22px;
+    padding: 12px 22px 14px;
+    background: var(--surface);
+    border-top: 2px solid var(--line);
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+  .save-btn { min-height: 56px; }
+  .next-box { margin-top: 14px; }
+  .next-btn { min-height: 72px; }
+}
 .next-btn {
   width: 100%;
   background: var(--accent);

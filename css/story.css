@@ -122,6 +122,49 @@
 
 .error-text { font-size: var(--fs-lg); font-weight: 700; color: var(--danger); }
 
+/* 가로 화면(태블릿 가로 1024×768, 크롬북 1366×768 등):
+ * 한 화면(100dvh)에 맞추고, 그림이 남는 높이만 쓰며, 버튼 줄은 아래에 고정 */
+@media (orientation: landscape) and (max-height: 820px) {
+  .story-main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    padding-top: 10px;
+    padding-bottom: 0;
+  }
+  .story-header { margin-bottom: 6px; }
+  .story-header .btn { min-height: 52px; }
+  .story-title { font-size: var(--fs-lg); margin-bottom: 6px; }
+  .progress-bar { height: 8px; margin-bottom: 10px; flex: none; }
+
+  .scene-stage, .video-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .scene-stage[hidden], .video-stage[hidden] { display: none; }
+  .scene-media {
+    flex: 1;
+    min-height: 140px;
+    max-height: none;
+    aspect-ratio: auto;
+  }
+  .scene-talk { flex: none; margin-top: 22px; padding: 28px 24px 16px; min-height: 0; }
+  .tap-hint { display: none; }
+
+  .story-nav {
+    position: sticky;
+    bottom: 0;
+    flex: none;
+    margin-top: 10px;
+    padding: 10px 0 12px;
+    background: var(--bg);
+  }
+  .nav-btn { min-height: 56px; }
+}
+
 @media (max-width: 600px) {
   .nav-btn { min-width: 0; flex: 1; }
   .finish-btn { flex-basis: 100%; }

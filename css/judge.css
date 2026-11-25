@@ -1,4 +1,7 @@
-/* teacher/judge.html — AI 활용 판단 사례 (TV 발표용) */
+/* teacher/judge.html — AI 활용 판단 사례 (TV 발표용)
+ * 넓은 가로 화면: 한 화면(스크롤 없음). 왼쪽 1/3 그림+막대, 오른쪽 2/3 설명·질문·O/X
+ * 질문이 많으면 질문 목록만 안에서 스크롤, O/X 칸은 항상 보임
+ */
 
 :root {
   --o: #2f6fdf;  /* O */
@@ -7,32 +10,53 @@
 
 .error-text { color: var(--danger); font-weight: 700; }
 
+.judge-app { display: flex; flex-direction: column; }
+
 .judge-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  margin-bottom: calc(var(--gap) * 0.6);
+  flex: none;
 }
 .judge-page-title { margin: 0; font-size: var(--fs-lg); color: var(--ink-soft); }
-.judge-progress { font-size: var(--fs-xl); font-weight: 900; font-variant-numeric: tabular-nums; }
-
-/* ---------- 사례: 그림 | 설명 ---------- */
-.case {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: calc(var(--gap) * 1.2);
-  align-items: start;
+.judge-nav { display: flex; align-items: center; gap: 14px; }
+.judge-nav .nav-btn { min-height: 52px; font-size: var(--fs-sm); padding: 0 1em; }
+.judge-progress {
+  min-width: 3.6em;
+  text-align: center;
+  font-size: var(--fs-lg);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
-@media (max-width: 1000px) {
-  .case { grid-template-columns: 1fr; }
+
+/* ---------- 본문: 1/3 | 2/3 ---------- */
+.judge-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--gap);
+  flex: 1;
+  min-height: 0;
+}
+@media (max-width: 959px), (orientation: portrait) {
+  .judge-body { grid-template-columns: minmax(0, 1fr); }
+}
+
+.judge-left, .judge-right {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) * 0.7);
+  min-height: 0;
+  min-width: 0;
 }
 
 .case-media {
   position: relative;
+  flex: none;
   width: 100%;
   aspect-ratio: 4 / 3;
-  max-height: 56vh;
   border-radius: var(--radius);
   background: #1f2a44;
   overflow: hidden;
@@ -51,19 +75,42 @@
   font-weight: 700;
 }
 
-.case-title { font-size: var(--fs-xl); margin-bottom: 0.3em; }
-.case-situation { font-size: var(--fs-lg); line-height: 1.55; white-space: pre-line; }
+.case-text { flex: none; }
+.case-title { font-size: var(--fs-xl); margin-bottom: 0.2em; }
+.case-situation { font-size: var(--fs-lg); line-height: 1.5; white-space: pre-line; margin: 0; }
 
-/* ---------- 생각해 볼 점 ---------- */
-.think { margin-top: 12px; }
-.think-btn { background: #fff3e6; color: #a85a12; font-size: var(--fs-base); }
+/* ---------- 생각해 볼 점: 남는 공간을 쓰고, 넘치면 안에서 스크롤 ---------- */
+.think {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.think-btn {
+  flex: none;
+  align-self: flex-start;
+  min-height: 52px;
+  background: #fff3e6;
+  color: #a85a12;
+  font-size: var(--fs-base);
+}
 .think-btn:disabled { opacity: 0.6; }
 
-.think-list { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 12px; }
+.think-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px 4px 0;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
 .think-list li {
   display: flex;
   gap: 0.6em;
-  padding: 14px 20px;
+  padding: 8px 16px;
   border-radius: var(--radius-sm);
   background: var(--surface);
   border-left: 8px solid var(--accent);
@@ -77,34 +124,31 @@
   to { opacity: 1; transform: none; }
 }
 
-/* ---------- O/X 기록 ---------- */
-.vote { margin-top: calc(var(--gap) * 1.2); padding: 22px 28px; }
-.vote-title { font-size: var(--fs-lg); margin-bottom: 14px; }
-.vote-title small { font-weight: 400; color: var(--ink-soft); font-size: 0.7em; }
+/* ---------- O/X 기록 (오른쪽 아래, 항상 보임) ---------- */
+.vote { flex: none; padding: 14px 22px; }
+.vote-title { font-size: var(--fs-base); margin-bottom: 8px; }
+.vote-title small { font-weight: 400; color: var(--ink-soft); font-size: 0.8em; }
 
-.vote-rows { display: grid; gap: 14px; }
+.vote-rows { display: grid; gap: 8px; }
 .vote-row {
   display: grid;
-  grid-template-columns: 6em 1fr 1fr;
+  grid-template-columns: 3.2em minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  gap: 20px;
-}
-@media (max-width: 900px) {
-  .vote-row { grid-template-columns: 1fr 1fr; }
-  .stage-name { grid-column: 1 / -1; }
+  gap: 14px;
 }
 .stage-name { font-weight: 900; }
 
 .counter {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 10px;
   border-radius: var(--radius-sm);
   background: #f4f1ea;
 }
 .counter .ox {
-  width: 1.6em;
+  width: 1.4em;
   text-align: center;
   font-size: var(--fs-xl);
   font-weight: 900;
@@ -113,7 +157,7 @@
 .counter[data-key$="O"] .ox { color: var(--o); }
 .counter[data-key$="X"] .ox { color: var(--x); }
 .counter .count {
-  min-width: 2.2em;
+  min-width: 2.4em;
   text-align: center;
   font-size: var(--fs-xl);
   font-weight: 900;
@@ -121,21 +165,21 @@
 }
 .counter .count::after { content: '명'; font-size: 0.5em; margin-left: 2px; color: var(--ink-soft); }
 .counter .step {
-  min-height: 64px;
-  min-width: 64px;
+  min-height: 52px;
+  min-width: 52px;
   padding: 0;
   font-size: var(--fs-lg);
 }
 
-/* ---------- 처음 vs 최종 막대 ---------- */
-.compare { margin-top: 22px; padding-top: 18px; border-top: 3px dashed var(--line); }
-.compare-title { font-size: var(--fs-base); margin-bottom: 12px; }
-.bars { display: grid; gap: 12px; }
-.bar-row { display: grid; grid-template-columns: 6em 1fr; align-items: center; gap: 20px; }
-.bar-label { font-weight: 900; }
+/* ---------- 처음 vs 최종 막대 (왼쪽, 그림 아래) ---------- */
+.compare { flex: none; padding: 12px 16px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+.compare-title { font-size: var(--fs-sm); margin-bottom: 8px; }
+.bars { display: grid; gap: 8px; }
+.bar-row { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); align-items: center; gap: 10px; }
+.bar-label { font-weight: 900; font-size: var(--fs-sm); }
 .bar {
   display: flex;
-  height: 1.8em;
+  height: 1.7em;
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--line);
@@ -144,15 +188,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   color: #fff;
   font-weight: 900;
-  font-size: 0.75rem;
+  font-size: max(14px, 0.65rem);
   white-space: nowrap;
   transition: width 0.4s ease;
 }
 .bar .bar-o { background: var(--o); }
 .bar .bar-x { background: var(--x); }
 
-/* ---------- 이전/다음 ---------- */
-.judge-nav { display: flex; justify-content: space-between; margin-top: var(--gap); }
-.nav-btn { min-width: 8em; }
+/* 좁은 화면(세로): 그림 크기 제한 */
+@media (max-width: 959px), (orientation: portrait) {
+  .case-media { max-height: 40vh; }
+}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="teacher">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,25 +8,21 @@
   <link rel="stylesheet" href="../css/results.css">
 </head>
 <body class="teacher">
-  <main class="container">
+  <main class="container fit-screen">
+    <h1 class="sr-only">모둠별 결과</h1>
+    <!-- 메뉴 줄에 도구 버튼까지 넣어 위쪽 높이를 줄인다 -->
     <nav class="teacher-nav" aria-label="교사 메뉴">
       <a class="tab" href="results.html" aria-current="page">결과</a>
       <a class="tab" href="summary.html">정리</a>
       <a class="tab" href="judge.html">AI 활용 판단</a>
       <span class="nav-spacer"></span>
+      <button type="button" class="btn btn-primary" id="exportBtn">결과 내보내기(CSV)</button>
+      <button type="button" class="btn btn-ghost danger-ghost" id="resetAllBtn">전체 초기화</button>
       <a class="btn btn-ghost" href="../index.html">처음 화면</a>
     </nav>
-
-    <header class="results-head">
-      <h1 class="results-title">모둠별 결과</h1>
-      <div class="results-tools">
-        <button type="button" class="btn btn-primary" id="exportBtn">결과 내보내기(CSV)</button>
-        <button type="button" class="btn btn-ghost danger-ghost" id="resetAllBtn">전체 초기화</button>
-      </div>
-    </header>
     <p class="reset-note">⚠ 초기화 전에 [결과 내보내기]를 먼저 하세요. 초기화하면 되돌릴 수 없어요. (전체 초기화는 AI 활용 판단 O/X 기록도 지워요)</p>
 
-    <div class="result-grid" id="resultGrid" aria-live="polite">
+    <div class="result-grid fit-fill" id="resultGrid" aria-live="polite">
       <!-- js/results.js 가 1~6모둠 카드를 만듭니다 -->
     </div>
     <p class="refresh-note muted">5초마다 저절로 새로 보여요 · <span id="lastUpdate"></span></p>

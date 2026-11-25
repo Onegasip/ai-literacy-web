@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="teacher">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="../css/judge.css">
 </head>
 <body class="teacher">
-  <main class="container">
+  <main class="container fit-screen">
     <nav class="teacher-nav" aria-label="교사 메뉴">
       <a class="tab" href="results.html">결과</a>
       <a class="tab" href="summary.html">정리</a>
@@ -19,53 +19,56 @@
 
     <p class="error-text" id="errorText" hidden>사례(data/judge-cases.json)를 불러오지 못했어요.</p>
 
-    <div id="judgeApp" hidden>
+    <div id="judgeApp" class="judge-app fit-fill" hidden>
+      <!-- 위: 제목 + 이전/진행/다음 (항상 보임) -->
       <header class="judge-head">
         <h1 class="judge-page-title" id="pageTitle">AI 활용 판단</h1>
-        <span class="judge-progress" id="progress" aria-live="polite"></span>
+        <div class="judge-nav">
+          <button type="button" class="btn btn-ghost nav-btn" id="prevBtn" aria-label="이전 사례">◀ 이전</button>
+          <span class="judge-progress" id="progress" aria-live="polite"></span>
+          <button type="button" class="btn btn-primary nav-btn" id="nextBtn" aria-label="다음 사례">다음 ▶</button>
+        </div>
       </header>
 
-      <!-- 사례 -->
-      <section class="case" aria-live="polite">
-        <div class="case-media" id="caseMedia"></div>
-        <div class="case-text">
-          <h2 class="case-title" id="caseTitle"></h2>
-          <p class="case-situation" id="caseSituation"></p>
+      <div class="judge-body">
+        <!-- 왼쪽 1/3: 그림 + 처음 vs 최종 막대 -->
+        <div class="judge-left">
+          <div class="case-media" id="caseMedia"></div>
+          <div class="compare" id="compare" hidden>
+            <h3 class="compare-title">처음 → 최종, 생각이 바뀌었나요?</h3>
+            <div class="bars" id="bars"></div>
+          </div>
+        </div>
+
+        <!-- 오른쪽 2/3: 사례 설명 + 생각해 볼 점 + O/X -->
+        <div class="judge-right">
+          <section class="case-text" aria-live="polite">
+            <h2 class="case-title" id="caseTitle"></h2>
+            <p class="case-situation" id="caseSituation"></p>
+          </section>
 
           <div class="think">
             <button type="button" class="btn think-btn" id="thinkBtn">💭 생각해 볼 점</button>
             <ol class="think-list" id="thinkList"></ol>
           </div>
-        </div>
-      </section>
 
-      <!-- O/X 기록 -->
-      <section class="vote card" aria-labelledby="voteTitle">
-        <h2 class="vote-title" id="voteTitle">우리 반 판단 <small>(O/X 인원)</small></h2>
-        <div class="vote-rows">
-          <div class="vote-row" data-stage="first">
-            <span class="stage-name">처음 판단</span>
-            <div class="counter" data-key="firstO"></div>
-            <div class="counter" data-key="firstX"></div>
-          </div>
-          <div class="vote-row" data-stage="final">
-            <span class="stage-name">최종 판단</span>
-            <div class="counter" data-key="finalO"></div>
-            <div class="counter" data-key="finalX"></div>
-          </div>
+          <section class="vote card" aria-labelledby="voteTitle">
+            <h2 class="vote-title" id="voteTitle">우리 반 판단 <small>(O/X 인원)</small></h2>
+            <div class="vote-rows">
+              <div class="vote-row" data-stage="first">
+                <span class="stage-name">처음</span>
+                <div class="counter" data-key="firstO"></div>
+                <div class="counter" data-key="firstX"></div>
+              </div>
+              <div class="vote-row" data-stage="final">
+                <span class="stage-name">최종</span>
+                <div class="counter" data-key="finalO"></div>
+                <div class="counter" data-key="finalX"></div>
+              </div>
+            </div>
+          </section>
         </div>
-
-        <!-- 최종 판단까지 입력되면 표시 -->
-        <div class="compare" id="compare" hidden>
-          <h3 class="compare-title">처음 → 최종, 생각이 어떻게 바뀌었나요?</h3>
-          <div class="bars" id="bars"></div>
-        </div>
-      </section>
-
-      <nav class="judge-nav">
-        <button type="button" class="btn btn-ghost nav-btn" id="prevBtn">◀ 이전</button>
-        <button type="button" class="btn btn-primary nav-btn" id="nextBtn">다음 ▶</button>
-      </nav>
+      </div>
     </div>
   </main>
 
