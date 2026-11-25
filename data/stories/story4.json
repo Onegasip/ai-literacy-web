@@ -1,11 +1,20 @@
 {
   "id": 4,
-  "title": "이야기 4 (임시 제목)",
-  "intro": "AI와 함께하는 네 번째 이야기 (임시 소개)",
+  "title": "번역기가 전한 칭찬",
+  "intro": "AI 번역기 덕분에 새 친구와 대화할 수 있게 됐어. 그런데 칭찬이 이상하게 전해졌다고?",
   "mode": "scenes",
   "scenes": [
-    { "image": "assets/img/story4-1.png", "role": "narrator", "speaker": "해설", "text": "이야기 4의 첫 번째 장면이에요. (더미 내용)" },
-    { "image": "assets/img/story4-2.png", "role": "student", "speaker": "민지", "text": "AI에게 도움을 받아 볼까? (더미 대사)" },
-    { "image": "assets/img/story4-3.png", "role": "ai", "speaker": "AI", "text": "제가 도와드릴게요! (더미 대사)" }
+    { "image": "assets/img/story4-1.png", "alt": "교실 앞에 선 전학생 안과 선생님", "role": "narrator", "speaker": "해설", "text": "6학년 2반에 베트남에서 온 전학생 '안'이 왔어요. 안은 아직 한국어를 거의 몰라요." },
+    { "image": "assets/img/story4-2.png", "alt": "어색하게 손을 흔드는 민재", "role": "student", "speaker": "민재", "text": "안녕! 나는 민재야. 어… 어떻게 말하지?" },
+    { "image": "assets/img/story4-3.png", "alt": "책상 위 태블릿에 번역 앱이 켜진 모습", "role": "narrator", "speaker": "해설", "text": "선생님이 책상 위 태블릿에 AI 번역기를 켜 주었어요. 민재가 말하면 베트남어로, 안이 말하면 한국어로 바꿔 줘요." },
+    { "image": "assets/img/story4-3.png", "alt": "책상 위 태블릿에 번역 앱이 켜진 모습", "role": "student", "speaker": "민재", "text": "급식실은 1층이고, 점심시간은 12시 10분이야. 내가 같이 가 줄게!" },
+    { "image": "assets/img/story4-4.png", "alt": "번역된 화면을 보고 활짝 웃는 안", "role": "ai", "speaker": "AI 번역기 (안의 말)", "text": "정말 고마워! 처음엔 무서웠는데, 이제 조금 괜찮아." },
+    { "image": "assets/img/story4-5.png", "alt": "태블릿을 들고 학교 곳곳을 안내하는 민재와 안", "role": "narrator", "speaker": "해설", "text": "AI 번역기 덕분에 민재는 안에게 시간표, 준비물, 도서관 이용법까지 막힘없이 알려 줄 수 있었어요. 단 1초도 기다리지 않고요." },
+    { "image": "assets/img/story4-6.png", "alt": "미술 시간, 안이 그린 멋진 그림을 보고 감탄하는 민재", "role": "narrator", "speaker": "해설", "text": "며칠 뒤 미술 시간, 안이 그린 그림을 본 민재가 깜짝 놀랐어요." },
+    { "image": "assets/img/story4-6.png", "alt": "미술 시간, 안이 그린 멋진 그림을 보고 감탄하는 민재", "role": "student", "speaker": "민재", "text": "와, 너 그림 실력 진짜 미쳤다! 완전 대박이야!" },
+    { "image": "assets/img/story4-7.png", "alt": "번역된 화면을 보고 표정이 어두워진 안", "role": "ai", "speaker": "AI 번역기 (안의 말)", "text": "내가… 미쳤다고? 그리고 '큰 박'은 무슨 뜻이야? 내 그림이 이상해?" },
+    { "image": "assets/img/story4-8.png", "alt": "손을 내저으며 당황한 민재", "role": "student", "speaker": "민재", "text": "아, 아니야! 그런 뜻이 아니라 엄청 잘 그렸다는 칭찬이었는데…!" },
+    { "image": "assets/img/story4-9.png", "alt": "시무룩한 안과 발을 동동 구르는 민재", "role": "narrator", "speaker": "해설", "text": "안은 시무룩해졌고, 민재는 어떻게 마음을 전해야 할지 몰라 발만 동동 굴렀어요." },
+    { "image": "assets/img/story4-9.png", "alt": "시무룩한 안과 발을 동동 구르는 민재", "role": "narrator", "speaker": "해설", "text": "AI 번역기는 무엇을 잘했고, 무엇을 어려워했을까요? 민재는 어떻게 하면 마음을 잘 전할 수 있을까요?" }
   ]
 }
