@@ -43,6 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* ---------- 이벤트 연결을 먼저 (불러오기가 실패해도 저장 버튼이 동작하도록) ---------- */
 
+  const counters = Object.values(fields).map(attachCharCounter); // "120 / 300"
+
   Object.entries(fields).forEach(([key, el]) => {
     el.addEventListener('input', () => {
       dirty = true;
@@ -134,6 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!dirty) {
     fields.strength.value = saved.strength || '';
     fields.limit.value = saved.limit || '';
+    counters.forEach((update) => update());
     if (saved.strength && saved.limit) {
       setState('saved', saved.updatedAt);
       nextBox.hidden = false;

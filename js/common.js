@@ -197,7 +197,9 @@ function confirmDialog(message, { okText = '확인', cancelText = '취소', dang
  *  UTF-8 BOM을 붙여 엑셀에서 한글이 깨지지 않게 한다. */
 function downloadCSV(filename, rows) {
   const cell = (v) => {
-    const s = String(v ?? '');
+    let s = String(v ?? '');
+    // =, +, -, @ 로 시작하면 엑셀이 수식으로 읽을 수 있으므로 앞에 ' 를 붙인다
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
     return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const csv = rows.map((r) => r.map(cell).join(',')).join('\r\n');
@@ -210,6 +212,24 @@ function downloadCSV(filename, rows) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** 입력칸 아래 "120 / 300" 글자 수 표시. maxlength와 같은 방식으로 센다(이모지는 2자).
+ *  글을 코드로 넣은 뒤에는 반환된 함수를 불러 다시 센다. */
+function attachCharCounter(textarea) {
+  const counter = document.createElement('span');
+  counter.className = 'char-count';
+  counter.setAttribute('aria-live', 'polite');
+  textarea.insertAdjacentElement('afterend', counter);
+  const max = textarea.maxLength > 0 ? textarea.maxLength : null;
+  const update = () => {
+    const n = textarea.value.length;
+    counter.textContent = max ? `${n} / ${max}` : `${n}자`;
+    counter.classList.toggle('is-near', Boolean(max) && n >= max * 0.9);
+  };
+  textarea.addEventListener('input', update);
+  update();
+  return update;
 }
 
 /** 오늘 날짜 YYYYMMDD (파일 이름용) */

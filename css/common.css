@@ -183,6 +183,17 @@ p { margin: 0 0 1em; }
 .textarea:focus, .input:focus { outline: none; border-color: var(--primary); }
 .textarea[readonly] { background: #f1eee6; color: var(--ink-soft); }
 
+/* 글자 수 "120 / 300" */
+.char-count {
+  display: block;
+  margin-top: 4px;
+  text-align: right;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+.char-count.is-near { color: var(--danger); font-weight: 700; }
+
 /* ---------- 확인창·모달 ---------- */
 .modal-overlay {
   position: fixed;

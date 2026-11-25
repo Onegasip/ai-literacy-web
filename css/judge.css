@@ -202,3 +202,8 @@
 @media (max-width: 959px), (orientation: portrait) {
   .case-media { max-height: 40vh; }
 }
+
+/* O/X 뜻 안내 (투표 칸 제목 옆) */
+.ox-guide { margin-left: 0.4em; }
+.ox-guide .o { color: var(--o); }
+.ox-guide .x { color: var(--x); }

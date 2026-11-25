@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const saveState = document.getElementById('saveState');
   const saveBtn = document.getElementById('saveBtn');
+  const counters = Object.values(fields).map(attachCharCounter); // "120 / 300"
   let dirty = false;
   let lastMembers = null;
 
@@ -108,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isRecorder && dirty) return;
     fields.strength.value = summary?.strength || '';
     fields.limit.value = summary?.limit || '';
+    counters.forEach((update) => update());
     setState(summary ? 'saved' : 'none', summary?.updatedAt);
   }
 

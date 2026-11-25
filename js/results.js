@@ -207,7 +207,8 @@ async function exportCSV() {
 
   if (ids.length) {
     rows.push([]);
-    rows.push(['AI 활용 판단', '사례', '처음 O', '처음 X', '최종 O', '최종 X', '수정시각']);
+    rows.push(['AI 활용 판단']);
+    rows.push(['사례 ID', '사례 제목', '처음 O', '처음 X', '최종 O', '최종 X', '수정시각']);
     ids.forEach((id) => {
       const c = cases.find((x, i) => String(x.id ?? `case${i + 1}`) === id);
       const j = judges[id] || {};
