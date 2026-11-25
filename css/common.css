@@ -217,6 +217,32 @@ p { margin: 0 0 1em; }
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+/* ---------- 교사 페이지 공통 메뉴 (results / summary / judge) ---------- */
+body.teacher .container { max-width: 1840px; }
+
+.teacher-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: var(--gap);
+  padding-bottom: 16px;
+  border-bottom: 3px solid var(--line);
+}
+.teacher-nav .tab {
+  min-height: 64px;
+  padding: 0 1.1em;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.teacher-nav .tab[aria-current="page"] { background: var(--ink); color: #fff; }
+.teacher-nav .nav-spacer { flex: 1; }
+.teacher-nav .btn { min-height: 64px; font-size: var(--fs-sm); }
+
 /* ---------- 기타 ---------- */
 .muted { color: var(--ink-soft); }
 .center { text-align: center; }

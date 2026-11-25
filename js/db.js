@@ -104,12 +104,24 @@ const DB = (() => {
    *  Firebase: onSnapshot 실시간 구독으로 바꾸면 된다.
    *  반환값: 지켜보기를 멈추는 함수 */
   function watchGroup(group, callback, intervalMs = 5000) {
+    return poll(async () => ({
+      summary: readDoc(groupPath(group)),
+      members: await getGroupMembers(group),
+    }), callback, intervalMs);
+  }
+
+  /** 1~6모둠 전체 지켜보기 (교사 results용). callback(getAllGroups() 결과)
+   *  Firebase: groups 컬렉션 + members 하위 컬렉션 onSnapshot 으로 교체 */
+  function watchAll(callback, intervalMs = 5000) {
+    return poll(getAllGroups, callback, intervalMs);
+  }
+
+  /* localStorage용 지켜보기: 주기적으로 read()해서 바뀌었을 때만 callback.
+   * 반환된 객체의 함수를 부르면 멈추고, .refresh()로 즉시 다시 읽는다. */
+  function poll(read, callback, intervalMs) {
     let last = '';
     const tick = async () => {
-      const data = {
-        summary: readDoc(groupPath(group)),
-        members: await getGroupMembers(group),
-      };
+      const data = await read();
       const json = JSON.stringify(data);
       if (json !== last) {
         last = json;
@@ -120,14 +132,17 @@ const DB = (() => {
     tick();
     const timer = setInterval(tick, intervalMs);
     window.addEventListener('storage', onStorage);
-    return () => {
+    const stop = () => {
       clearInterval(timer);
       window.removeEventListener('storage', onStorage);
     };
+    stop.refresh = tick;
+    return stop;
   }
 
   return {
     watchGroup,
+    watchAll,
     getMember,
     saveMember,
     getGroupMembers,
