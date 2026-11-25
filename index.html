@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI, 언제 쓸까?</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+  <main class="container index-main">
+    <header class="hero">
+      <p class="hero-kicker">6학년 AI 리터러시</p>
+      <h1 class="hero-title">AI, 언제 쓸까?</h1>
+      <p class="hero-sub">이야기 속 AI의 <b class="t-strength">장점</b>과 <b class="t-limit">한계</b>를 찾아보아요</p>
+    </header>
+
+    <section aria-labelledby="pick-group">
+      <h2 id="pick-group" class="pick-title">우리 모둠을 골라요</h2>
+      <div class="group-grid" id="groupGrid">
+        <!-- js/index.js 가 1~6모둠 버튼을 만듭니다 -->
+      </div>
+    </section>
+  </main>
+
+  <button type="button" class="btn teacher-btn" id="teacherBtn">결과 모아보기</button>
+
+  <!-- 교사 비밀번호 창 -->
+  <div class="modal-overlay" id="pwModal" hidden>
+    <form class="modal" id="pwForm" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+      <h2 id="pwTitle" class="modal-message">선생님 비밀번호</h2>
+      <input class="input pw-input" id="pwInput" type="password" inputmode="numeric" autocomplete="off" aria-label="비밀번호">
+      <p class="pw-error" id="pwError" hidden>비밀번호가 틀렸어요.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="pwCancel">취소</button>
+        <button type="submit" class="btn btn-primary">들어가기</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>
