@@ -4,17 +4,17 @@
   "intro": "AI가 써 준 감상문은 맞춤법도 완벽했어. 그런데 선생님은 왜 지우를 불렀을까?",
   "mode": "scenes",
   "scenes": [
-    { "image": "assets/img/story3-1.png", "alt": "밤늦게 책상에 엎드린 지우와 반쯤 펼친 책", "role": "narrator", "speaker": "해설", "text": "일요일 밤 9시. 지우는 내일까지 내야 하는 독서감상문을 아직 한 줄도 못 썼어요. 책도 절반밖에 못 읽었고요." },
-    { "image": "assets/img/story3-1.png", "alt": "밤늦게 책상에 엎드린 지우와 반쯤 펼친 책", "role": "student", "speaker": "지우", "text": "『바다를 건너는 고양이』… 아, 이걸 언제 다 읽고 언제 다 써." },
-    { "image": "assets/img/story3-2.png", "alt": "노트북에 부탁을 입력하는 지우", "role": "narrator", "speaker": "해설", "text": "지우는 AI 글쓰기 도우미에게 부탁했어요. '『바다를 건너는 고양이』 독서감상문 써 줘. 초등학생답게, 원고지 4장.'" },
-    { "image": "assets/img/story3-3.png", "alt": "노트북 화면에 긴 글이 빠르게 채워지는 모습", "role": "ai", "speaker": "AI 글쓰기 도우미", "text": "『바다를 건너는 고양이』를 읽고 — 주인공 고양이 '나비'가 폭풍우 속에서 친구를 구하는 장면에서 나는 진정한 용기가 무엇인지 깨달았다. …" },
-    { "image": "assets/img/story3-4.png", "alt": "화면을 보며 눈이 동그래진 지우", "role": "student", "speaker": "지우", "text": "우와, 20초 만에 다 썼어! 문장도 엄청 매끄럽고 맞춤법도 하나도 안 틀렸어. 나보다 훨씬 잘 쓰는데?" },
-    { "image": "assets/img/story3-5.png", "alt": "감상문을 그대로 옮겨 적고 일찍 잠드는 지우", "role": "narrator", "speaker": "해설", "text": "지우는 AI가 쓴 글을 그대로 옮겨 적고, 일찍 잠자리에 들었어요." },
-    { "image": "assets/img/story3-6.png", "alt": "교실에서 감상문을 든 선생님이 지우를 부르는 모습", "role": "narrator", "speaker": "해설", "text": "다음 날, 감상문을 읽은 선생님이 지우를 조용히 불렀어요." },
-    { "image": "assets/img/story3-7.png", "alt": "책과 감상문을 나란히 들고 설명하는 선생님", "role": "narrator", "speaker": "선생님", "text": "지우야, 이 책의 고양이 이름은 '나비'가 아니라 '모모'란다. 그리고 폭풍우 장면은 이 책 어디에도 없는데?" },
-    { "image": "assets/img/story3-8.png", "alt": "얼굴이 빨개진 채 당황한 지우", "role": "student", "speaker": "지우", "text": "네…? 그게… AI가 분명히…" },
-    { "image": "assets/img/story3-9.png", "alt": "부드럽게 질문하는 선생님", "role": "narrator", "speaker": "선생님", "text": "하나만 더 물어볼게. 이 글에서 '지우의 생각'은 어디에 있니? 선생님은 지우가 이 책을 읽고 무엇을 느꼈는지 정말 궁금했거든." },
-    { "image": "assets/img/story3-10.png", "alt": "고개를 숙이고 작게 대답하는 지우", "role": "student", "speaker": "지우", "text": "(작은 목소리로) …저도 잘 모르겠어요." },
-    { "image": "assets/img/story3-10.png", "alt": "고개를 숙이고 작게 대답하는 지우", "role": "narrator", "speaker": "해설", "text": "AI 글쓰기 도우미는 무엇을 잘했고, 무엇을 어려워했을까요? 독서감상문 숙제는 무엇을 위한 걸까요?" }
+    { "image": "assets/img/story3-1.webp", "alt": "밤늦게 책상에 엎드린 지우와 반쯤 펼친 책", "role": "narrator", "speaker": "해설", "text": "일요일 밤 9시. 지우는 내일까지 내야 하는 독서감상문을 아직 한 줄도 못 썼어요. 책도 절반밖에 못 읽었고요." },
+    { "image": "assets/img/story3-1.webp", "alt": "밤늦게 책상에 엎드린 지우와 반쯤 펼친 책", "role": "student", "speaker": "지우", "text": "『바다를 건너는 고양이』… 아, 이걸 언제 다 읽고 언제 다 써." },
+    { "image": "assets/img/story3-2.webp", "alt": "노트북에 부탁을 입력하는 지우", "role": "narrator", "speaker": "해설", "text": "지우는 AI 글쓰기 도우미에게 부탁했어요. '『바다를 건너는 고양이』 독서감상문 써 줘. 초등학생답게, 원고지 4장.'" },
+    { "image": "assets/img/story3-3.webp", "alt": "노트북 화면에 긴 글이 빠르게 채워지는 모습", "role": "ai", "speaker": "AI 글쓰기 도우미", "text": "『바다를 건너는 고양이』를 읽고 — 주인공 고양이 '나비'가 폭풍우 속에서 친구를 구하는 장면에서 나는 진정한 용기가 무엇인지 깨달았다. …" },
+    { "image": "assets/img/story3-4.webp", "alt": "화면을 보며 눈이 동그래진 지우", "role": "student", "speaker": "지우", "text": "우와, 20초 만에 다 썼어! 문장도 엄청 매끄럽고 맞춤법도 하나도 안 틀렸어. 나보다 훨씬 잘 쓰는데?" },
+    { "image": "assets/img/story3-5.webp", "alt": "감상문을 그대로 옮겨 적고 일찍 잠드는 지우", "role": "narrator", "speaker": "해설", "text": "지우는 AI가 쓴 글을 그대로 옮겨 적고, 일찍 잠자리에 들었어요." },
+    { "image": "assets/img/story3-6.webp", "alt": "교실에서 감상문을 든 선생님이 지우를 부르는 모습", "role": "narrator", "speaker": "해설", "text": "다음 날, 감상문을 읽은 선생님이 지우를 조용히 불렀어요." },
+    { "image": "assets/img/story3-7.webp", "alt": "책과 감상문을 나란히 들고 설명하는 선생님", "role": "narrator", "speaker": "선생님", "text": "지우야, 이 책의 고양이 이름은 '나비'가 아니라 '모모'란다. 그리고 폭풍우 장면은 이 책 어디에도 없는데?" },
+    { "image": "assets/img/story3-8.webp", "alt": "얼굴이 빨개진 채 당황한 지우", "role": "student", "speaker": "지우", "text": "네…? 그게… AI가 분명히…" },
+    { "image": "assets/img/story3-9.webp", "alt": "부드럽게 질문하는 선생님", "role": "narrator", "speaker": "선생님", "text": "하나만 더 물어볼게. 이 글에서 '지우의 생각'은 어디에 있니? 선생님은 지우가 이 책을 읽고 무엇을 느꼈는지 정말 궁금했거든." },
+    { "image": "assets/img/story3-10.webp", "alt": "고개를 숙이고 작게 대답하는 지우", "role": "student", "speaker": "지우", "text": "(작은 목소리로) …저도 잘 모르겠어요." },
+    { "image": "assets/img/story3-10.webp", "alt": "고개를 숙이고 작게 대답하는 지우", "role": "narrator", "speaker": "해설", "text": "AI 글쓰기 도우미는 무엇을 잘했고, 무엇을 어려워했을까요? 독서감상문 숙제는 무엇을 위한 걸까요?" }
   ]
 }
