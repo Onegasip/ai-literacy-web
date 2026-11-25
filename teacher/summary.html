@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 능력과 한계 정리</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/summary.css">
+</head>
+<body class="teacher">
+  <main class="container">
+    <nav class="teacher-nav" aria-label="교사 메뉴">
+      <a class="tab" href="results.html">결과</a>
+      <a class="tab" href="summary.html" aria-current="page">정리</a>
+      <a class="tab" href="judge.html">AI 활용 판단</a>
+      <span class="nav-spacer"></span>
+      <a class="btn btn-ghost" href="../index.html">처음 화면</a>
+    </nav>
+
+    <header class="summary-head">
+      <h1 class="summary-title" id="summaryTitle">AI의 능력과 한계 정리</h1>
+      <div class="summary-tools">
+        <button type="button" class="btn btn-primary" id="showAllBtn">모두 보기</button>
+        <button type="button" class="btn btn-ghost" id="hideAllBtn">모두 가리기</button>
+      </div>
+    </header>
+
+    <p class="error-text" id="errorText" hidden>정리 내용(data/summary.json)을 불러오지 못했어요.</p>
+
+    <div class="summary-cols">
+      <section class="summary-col col-ability" aria-labelledby="abilityTitle">
+        <h2 class="col-title" id="abilityTitle">👍 AI의 능력 <small>(잘하는 것)</small></h2>
+        <ol class="reveal-list" id="abilityList"></ol>
+      </section>
+
+      <section class="summary-col col-limit" aria-labelledby="limitTitle">
+        <h2 class="col-title" id="limitTitle">🤔 AI의 한계 <small>(어려워하는 것)</small></h2>
+        <ol class="reveal-list" id="limitList"></ol>
+      </section>
+    </div>
+
+    <div id="conclusionWrap"></div>
+  </main>
+
+  <script src="../js/db.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/summary.js"></script>
+</body>
+</html>

@@ -42,6 +42,7 @@ groups/{1~6}/members/{1~4}    { strength, limit, updatedAt }   ← 학생 개인
 ```
 - `role`: 이름표 색 — `"narrator"`(해설) / `"student"`(학생) / `"ai"`(AI). 없으면 화자 이름으로 추측.
 - `image`가 없거나 못 읽으면 "그림 준비 중" 회색 박스로 대신 보인다.
+- 정리 JSON 형식 (`data/summary.json`): `title`, `abilities`(능력)·`limits`(한계) 배열의 각 항목 `{ "keyword": "키워드", "desc": "한 줄 설명", "stories": [2] }`, `conclusion`(맨 아래 핵심 문장). 항목 개수는 자유.
 - 영상 모드: `"mode": "video"`, `"video": "assets/video/story1.mp4"`, (선택) `"poster": "assets/img/story1-poster.png"`. 영상이 끝나면(또는 영상이 없으면) [적으러 가기] 버튼이 나온다.
 
 ## 사용자·디자인 규칙

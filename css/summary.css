@@ -1,0 +1,132 @@
+/* teacher/summary.html — AI 능력과 한계 정리 (클릭해서 하나씩 공개) */
+
+.summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: var(--gap);
+}
+.summary-title { margin: 0; font-size: var(--fs-xl); }
+.summary-tools { display: flex; gap: 12px; }
+.summary-tools .btn { font-size: var(--fs-sm); }
+
+.error-text { color: var(--danger); font-weight: 700; }
+
+/* ---------- 두 칸 ---------- */
+.summary-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--gap) * 1.4);
+}
+@media (max-width: 900px) {
+  .summary-cols { grid-template-columns: 1fr; }
+}
+
+.col-ability { --col: var(--strength); --col-soft: #e5f5ee; }
+.col-limit   { --col: var(--limit);    --col-soft: #fbefe2; }
+
+.col-title {
+  margin-bottom: 16px;
+  padding: 0.35em 0.8em;
+  border-radius: var(--radius-sm);
+  background: var(--col);
+  color: #fff;
+  font-size: var(--fs-lg);
+}
+.col-title small { font-weight: 500; font-size: 0.75em; opacity: 0.9; }
+
+.reveal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+
+/* ---------- 가려진 카드 ---------- */
+.reveal {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 4.4em;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.reveal:focus-visible { outline: 5px solid var(--accent); outline-offset: 4px; }
+
+.reveal-cover,
+.reveal-content {
+  border-radius: var(--radius);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* 덮개: 처음에 보이는 면 */
+.reveal-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0 28px;
+  background: var(--col);
+  background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.08) 0 16px, transparent 16px 32px);
+  color: #fff;
+  font-weight: 900;
+  box-shadow: var(--shadow);
+}
+.reveal-cover .cover-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+.reveal-cover .cover-hint { font-weight: 500; font-size: var(--fs-sm); opacity: 0.9; margin-left: auto; }
+
+/* 내용: 공개되는 면 */
+.reveal-content {
+  display: block;
+  padding: 18px 28px;
+  background: var(--surface);
+  border-left: 10px solid var(--col);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: scale(0.97);
+}
+.reveal-keyword { display: block; font-size: var(--fs-lg); font-weight: 900; color: var(--col); line-height: 1.3; }
+.reveal-desc { display: block; margin-top: 4px; }
+.reveal-stories { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.story-chip {
+  padding: 0.05em 0.7em;
+  border-radius: 999px;
+  background: var(--col-soft);
+  color: var(--ink);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.reveal.is-open .reveal-cover { opacity: 0; transform: rotateX(80deg); pointer-events: none; }
+.reveal.is-open .reveal-content { opacity: 1; transform: none; }
+
+/* ---------- 핵심 문장 ---------- */
+.conclusion-wrap { margin-top: calc(var(--gap) * 1.6); }
+.conclusion { --col: var(--ink); min-height: 5em; }
+.conclusion .reveal-cover { justify-content: center; background-color: var(--ink); }
+.conclusion .reveal-content {
+  border-left: 0;
+  border-top: 10px solid var(--accent);
+  padding: 26px 32px;
+  text-align: center;
+  font-size: var(--fs-lg);
+  font-weight: 900;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-cover, .reveal-content { transition: none; }
+}
