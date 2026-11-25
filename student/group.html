@@ -31,14 +31,14 @@
       <form id="summaryForm" novalidate>
         <label class="field">
           <span class="field-label strength">👍 우리 모둠이 찾은 AI의 장점</span>
-          <textarea class="textarea" id="strength" maxlength="500"
+          <textarea class="textarea" id="strength" maxlength="300"
             placeholder="예) 친구들 생각을 모아 보니, AI는 ○○을 잘해요."></textarea>
           <span class="field-error" id="strengthError" hidden>장점을 적어 주세요.</span>
         </label>
 
         <label class="field">
           <span class="field-label limit">🤔 우리 모둠이 찾은 AI의 한계</span>
-          <textarea class="textarea" id="limit" maxlength="500"
+          <textarea class="textarea" id="limit" maxlength="300"
             placeholder="예) 친구들 생각을 모아 보니, AI는 ○○을 어려워해요."></textarea>
           <span class="field-error" id="limitError" hidden>한계를 적어 주세요.</span>
         </label>
@@ -51,6 +51,8 @@
     </section>
   </main>
 
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../js/db.js"></script>
   <script src="../js/common.js"></script>
   <script src="../js/group.js"></script>

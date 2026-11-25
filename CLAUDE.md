@@ -12,9 +12,12 @@
 - JSON을 `fetch`로 읽으므로 로컬 확인은 VS Code Live Server 또는 `python -m http.server`로 한다. (`file://`로 열면 JSON을 못 읽음)
 
 ## DB 규칙
-- DB 관련 코드는 **`js/db.js` 한 파일에만** 둔다. 지금은 localStorage 임시 버전, 나중에 Firebase(Firestore)로 교체한다.
-- db.js 밖에서 localStorage를 직접 쓰지 않는다.
-- db 함수는 모두 `async`(Promise 반환)로 만든다 → Firebase로 바꿔도 호출하는 쪽 코드는 그대로.
+- DB 관련 코드는 **`js/db.js` 한 파일에만** 둔다. 현재 **Firebase Firestore** 버전(프로젝트 `ai-literacy-web`).
+- Firebase는 CDN **compat** SDK(`firebase-app-compat`, `firebase-firestore-compat`, 10.12.2)를 쓴다. 모든 html에서 SDK 두 줄 → `db.js` → `common.js` → 페이지 js 순서로 불러온다.
+- `js/db.local.js`는 예전 localStorage 버전 백업. Firebase 없이 시험할 때 SDK 두 줄과 db.js 대신 불러오면 된다.
+- 다른 js는 `DB.함수()`만 쓰고 Firestore/localStorage를 직접 쓰지 않는다. db 함수는 모두 `async`.
+- 실시간 화면은 `DB.watchGroup` / `DB.watchAll`(onSnapshot)로 받는다. 반환값은 멈추는 함수, `.refresh()`로 다시 받기.
+- 보안 규칙은 `firestore.rules`. 고치면 Firebase 콘솔 → Firestore → 규칙에 붙여넣고 [게시]. 글자 수 제한(300자)·인원 제한(0~999)은 db.js 상수와 맞춘다.
 - 회차(세션) 기능은 없다. 데이터 구조:
 
 ```
@@ -23,8 +26,8 @@ groups/{1~6}/members/{1~4}    { strength, limit, updatedAt }   ← 학생 개인
 judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt }  ← AI 활용 판단 O/X 인원(처음/최종)
 ```
 - 전체 초기화(`DB.resetAll`)와 CSV 내보내기는 모둠 결과 + judge 기록을 모두 포함한다.
-- 필드: `strength` = 장점(능력), `limit` = 한계, `updatedAt` = 저장 시각(ms)
-- localStorage 키는 위 경로 앞에 `ailit:`를 붙인다. (예: `ailit:groups/3/members/2`)
+- 필드: `strength` = 장점(능력, 300자까지), `limit` = 한계(300자까지), `updatedAt` = 저장 시각(ms 숫자). 입력칸 `maxlength`도 300.
+- (db.local.js에서는 localStorage 키 = 위 경로 앞에 `ailit:`)
 
 ## 콘텐츠 규칙
 - 스토리·정리·판단 사례 같은 내용은 `data/` 폴더의 JSON으로 분리한다. **코드에 하드코딩하지 않는다.**

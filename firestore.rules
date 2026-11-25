@@ -1,0 +1,61 @@
+rules_version = '2';
+
+// AI 리터러시 수업 웹앱 — Firestore 보안 규칙
+// 허용 경로: groups/{1~6}, groups/{1~6}/members/{1~4}, judge/{사례id}
+// 그 외 경로는 규칙이 없으므로 전부 차단된다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isGroup(g)  { return g in ['1', '2', '3', '4', '5', '6']; }
+    function isMember(m) { return m in ['1', '2', '3', '4']; }
+    function isCaseId(id) { return id.matches('^[A-Za-z0-9_-]{1,40}$'); }
+
+    function isText(v)  { return v is string && v.size() <= 300; }
+    function isTime(v)  { return v is number && v > 0; }
+    function isCount(v) { return v is int && v >= 0 && v <= 999; }
+
+    // 장점/한계 문서: strength, limit, updatedAt 세 필드만
+    function validThought() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['strength', 'limit', 'updatedAt'])
+          && d.keys().hasAll(['strength', 'limit', 'updatedAt'])
+          && isText(d.strength)
+          && isText(d.limit)
+          && isTime(d.updatedAt);
+    }
+
+    // O/X 기록 문서: firstO, firstX, finalO, finalX, updatedAt 다섯 필드만
+    function validJudge() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['firstO', 'firstX', 'finalO', 'finalX', 'updatedAt'])
+          && d.keys().hasAll(['firstO', 'firstX', 'finalO', 'finalX', 'updatedAt'])
+          && isCount(d.firstO) && isCount(d.firstX)
+          && isCount(d.finalO) && isCount(d.finalX)
+          && isTime(d.updatedAt);
+    }
+
+    // 모둠 정리
+    match /groups/{g} {
+      allow get: if isGroup(g);
+      allow list: if true;                       // groups 컬렉션 실시간 보기(교사)
+      allow create, update: if isGroup(g) && validThought();
+      allow delete: if isGroup(g);
+
+      // 개인 생각
+      match /members/{m} {
+        allow get: if isGroup(g) && isMember(m);
+        allow list: if isGroup(g);
+        allow create, update: if isGroup(g) && isMember(m) && validThought();
+        allow delete: if isGroup(g);              // 초기화 때 남은 문서까지 지울 수 있게
+      }
+    }
+
+    // AI 활용 판단 O/X 기록
+    match /judge/{id} {
+      allow get: if isCaseId(id);
+      allow list: if true;
+      allow create, update: if isCaseId(id) && validJudge();
+      allow delete: if true;
+    }
+  }
+}

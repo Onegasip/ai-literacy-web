@@ -1,112 +1,137 @@
 /* =========================================================
- * db.js — 데이터 저장소 (지금은 localStorage 임시 버전)
+ * db.js — 데이터 저장소 (Firebase Firestore 버전)
  *
- * ★ Firebase(Firestore)로 바꿀 때는 이 파일만 고치면 된다.
- *   모든 함수는 async(Promise)라서 호출하는 쪽 코드는 그대로 둔다.
+ * ★ DB 관련 코드는 이 파일에만 둔다. 다른 js는 DB.함수() 만 쓴다.
+ *   모든 함수는 async(Promise). 함수 이름·반환 형식은 localStorage 버전(db.local.js)과 같다.
  *
- * 데이터 구조 (Firestore 경로와 같음)
+ * 불러오는 순서 (각 html):
+ *   firebase-app-compat.js → firebase-firestore-compat.js → db.js → common.js → 페이지 js
+ *
+ * 데이터 구조 (Firestore)
  *   groups/{1~6}                 { strength, limit, updatedAt }  모둠 정리
  *   groups/{1~6}/members/{1~4}   { strength, limit, updatedAt }  개인 생각
  *   judge/{사례id}                { firstO, firstX, finalO, finalX, updatedAt }  O/X 인원
  *
- *   strength = 장점(능력), limit = 한계, updatedAt = 저장 시각(ms)
- *   localStorage 키 = "ailit:" + 경로
+ *   strength = 장점(능력), limit = 한계 (각 300자까지), updatedAt = 저장 시각(ms 숫자)
+ *   보안 규칙: firestore.rules
  * ========================================================= */
 
 const DB = (() => {
-  const PREFIX = 'ailit:';
+  const firebaseConfig = {
+    apiKey: 'AIzaSyDUA8IBXn1Qd0sYn3Pzy3by7Dd368AsfEA',
+    authDomain: 'ai-literacy-web.firebaseapp.com',
+    projectId: 'ai-literacy-web',
+    storageBucket: 'ai-literacy-web.firebasestorage.app',
+    messagingSenderId: '719070337244',
+    appId: '1:719070337244:web:9908434f8237c4fc14fc19',
+  };
+
+  if (typeof firebase === 'undefined') {
+    throw new Error('[DB] Firebase SDK가 없어요. html에서 db.js보다 먼저 firebase-app-compat.js, firebase-firestore-compat.js를 불러오세요.');
+  }
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const fs = firebase.firestore();
+
   const GROUPS = 6;
   const MEMBERS = 4;
+  const MAX_TEXT = 300;   // firestore.rules 의 글자 수 제한과 같게
+  const MAX_COUNT = 999;  // firestore.rules 의 인원 제한과 같게
 
-  const groupPath = (g) => `groups/${g}`;
-  const memberPath = (g, m) => `groups/${g}/members/${m}`;
+  /* ---------- 경로 ---------- */
+  const groupsCol = () => fs.collection('groups');
+  const groupRef = (g) => groupsCol().doc(String(g));
+  const membersCol = (g) => groupRef(g).collection('members');
+  const memberRef = (g, m) => membersCol(g).doc(String(m));
+  const judgeCol = () => fs.collection('judge');
+  const judgeRef = (id) => judgeCol().doc(String(id));
 
-  function readDoc(path) {
-    try {
-      const raw = localStorage.getItem(PREFIX + path);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      console.warn('[DB] 읽기 실패', path, e);
-      return null;
-    }
+  /* ---------- 도우미 ---------- */
+  const range = (n) => Array.from({ length: n }, (_, i) => i + 1);
+  const text = (v) => String(v ?? '').slice(0, MAX_TEXT);
+  const toCount = (n) => Math.min(MAX_COUNT, Math.max(0, Math.floor(Number(n) || 0)));
+  const docData = (snap) => (snap.exists ? snap.data() : null);
+  const onError = (e) => console.error('[DB] 실시간 연결 오류', e);
+
+  /** members 컬렉션 결과 → [{member:1, ...}, ... {member:4}] (없는 번호는 {member}만) */
+  function toMemberList(querySnap) {
+    const byId = {};
+    querySnap.forEach((d) => { byId[d.id] = d.data(); });
+    return range(MEMBERS).map((m) => ({ member: m, ...(byId[m] || {}) }));
   }
 
-  function writeDoc(path, data) {
-    const doc = {
-      strength: data.strength || '',
-      limit: data.limit || '',
-      updatedAt: Date.now(),
-    };
-    localStorage.setItem(PREFIX + path, JSON.stringify(doc));
+  async function writeThought(ref, { strength, limit }) {
+    const doc = { strength: text(strength), limit: text(limit), updatedAt: Date.now() };
+    await ref.set(doc);
     return doc;
   }
 
-  function deleteDoc(path) {
-    localStorage.removeItem(PREFIX + path);
-  }
+  /* ---------- 개인 생각 ---------- */
 
   /** 학생 개인 생각 읽기 → {strength, limit, updatedAt} 또는 null */
   async function getMember(group, member) {
-    return readDoc(memberPath(group, member));
+    return docData(await memberRef(group, member).get());
   }
 
   /** 학생 개인 생각 저장 */
-  async function saveMember(group, member, { strength, limit }) {
-    return writeDoc(memberPath(group, member), { strength, limit });
+  async function saveMember(group, member, data) {
+    return writeThought(memberRef(group, member), data);
   }
 
   /** 모둠의 1~4번 개인 생각 → [{member, strength, limit, updatedAt} | {member} ...] */
   async function getGroupMembers(group) {
-    const list = [];
-    for (let m = 1; m <= MEMBERS; m++) {
-      list.push({ member: m, ...(readDoc(memberPath(group, m)) || {}) });
-    }
-    return list;
+    return toMemberList(await membersCol(group).get());
   }
 
-  /** 모둠 정리 읽기 */
+  /* ---------- 모둠 정리 ---------- */
+
   async function getGroupSummary(group) {
-    return readDoc(groupPath(group));
+    return docData(await groupRef(group).get());
   }
 
-  /** 모둠 정리 저장 */
-  async function saveGroupSummary(group, { strength, limit }) {
-    return writeDoc(groupPath(group), { strength, limit });
+  async function saveGroupSummary(group, data) {
+    return writeThought(groupRef(group), data);
   }
 
   /** 1~6모둠 전체 → [{group, summary, members: [...]}, ...] */
   async function getAllGroups() {
-    const result = [];
-    for (let g = 1; g <= GROUPS; g++) {
-      result.push({
-        group: g,
-        summary: readDoc(groupPath(g)),
-        members: await getGroupMembers(g),
-      });
-    }
-    return result;
+    return Promise.all(range(GROUPS).map(async (g) => {
+      const [summarySnap, membersSnap] = await Promise.all([groupRef(g).get(), membersCol(g).get()]);
+      return { group: g, summary: docData(summarySnap), members: toMemberList(membersSnap) };
+    }));
+  }
+
+  /* ---------- 초기화 ---------- */
+  // Firestore는 상위 문서를 지워도 하위 컬렉션이 남으므로 members 문서를 직접 지운다.
+
+  async function addGroupDeletes(batch, g) {
+    batch.delete(groupRef(g));
+    const snap = await membersCol(g).get();
+    const ids = new Set(range(MEMBERS).map(String));
+    snap.forEach((d) => ids.add(d.id));
+    ids.forEach((id) => batch.delete(membersCol(g).doc(id)));
   }
 
   /** 한 모둠 초기화 (모둠 정리 + 1~4번 개인 생각 삭제) */
   async function resetGroup(group) {
-    deleteDoc(groupPath(group));
-    for (let m = 1; m <= MEMBERS; m++) deleteDoc(memberPath(group, m));
+    const batch = fs.batch();
+    await addGroupDeletes(batch, group);
+    await batch.commit();
   }
 
-  /** 전체 초기화 (이 앱의 "ailit:" 키만 삭제 — 모둠 결과 + judge 기록 모두) */
+  /** 전체 초기화 (1~6모둠 + 모든 members + judge 기록 삭제) */
   async function resetAll() {
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith(PREFIX))
-      .forEach((k) => localStorage.removeItem(k));
+    const batch = fs.batch();
+    for (const g of range(GROUPS)) await addGroupDeletes(batch, g);
+    const judges = await judgeCol().get();
+    judges.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
   }
 
-  /* ---------- AI 활용 판단 O/X 기록 (judge/{사례id}) ---------- */
-  const judgePath = (caseId) => `judge/${caseId}`;
-  const toCount = (n) => Math.max(0, Math.floor(Number(n) || 0));
+  /* ---------- AI 활용 판단 O/X 기록 ---------- */
 
   /** 사례 하나의 O/X 기록 → {firstO, firstX, finalO, finalX, updatedAt} 또는 null */
   async function getJudge(caseId) {
-    return readDoc(judgePath(caseId));
+    return docData(await judgeRef(caseId).get());
   }
 
   /** 사례 O/X 기록 저장 (0 이상의 정수로 정리) */
@@ -118,59 +143,73 @@ const DB = (() => {
       finalX: toCount(finalX),
       updatedAt: Date.now(),
     };
-    localStorage.setItem(PREFIX + judgePath(caseId), JSON.stringify(doc));
+    await judgeRef(caseId).set(doc);
     return doc;
   }
 
-  /** 모든 사례 기록 → { 사례id: {...}, ... } (CSV 내보내기용) */
+  /** 모든 사례 기록 → { 사례id: {...}, ... } */
   async function getAllJudges() {
     const result = {};
-    const head = PREFIX + 'judge/';
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith(head))
-      .forEach((k) => { result[k.slice(head.length)] = readDoc(k.slice(PREFIX.length)); });
+    (await judgeCol().get()).forEach((d) => { result[d.id] = d.data(); });
     return result;
   }
 
-  /** 모둠 데이터(정리 + 1~4번) 지켜보기. 바뀔 때마다 callback({summary, members}) 호출.
-   *  지금: 5초마다 다시 읽기 + 같은 기기 다른 탭 변경(storage 이벤트)
-   *  Firebase: onSnapshot 실시간 구독으로 바꾸면 된다.
-   *  반환값: 지켜보기를 멈추는 함수 */
-  function watchGroup(group, callback, intervalMs = 5000) {
-    return poll(async () => ({
-      summary: readDoc(groupPath(group)),
-      members: await getGroupMembers(group),
-    }), callback, intervalMs);
-  }
+  /* ---------- 실시간 지켜보기 (onSnapshot) ---------- */
 
-  /** 1~6모둠 전체 지켜보기 (교사 results용). callback(getAllGroups() 결과)
-   *  Firebase: groups 컬렉션 + members 하위 컬렉션 onSnapshot 으로 교체 */
-  function watchAll(callback, intervalMs = 5000) {
-    return poll(getAllGroups, callback, intervalMs);
-  }
-
-  /* localStorage용 지켜보기: 주기적으로 read()해서 바뀌었을 때만 callback.
-   * 반환된 객체의 함수를 부르면 멈추고, .refresh()로 즉시 다시 읽는다. */
-  function poll(read, callback, intervalMs) {
+  /* 같은 내용이면 callback을 다시 부르지 않는 도우미.
+   * 반환: 지켜보기를 멈추는 함수 (.refresh()는 마지막 내용을 다시 보내 줌) */
+  function makeWatcher(callback, unsubs, build) {
     let last = '';
-    const tick = async () => {
-      const data = await read();
+    const emit = (force = false) => {
+      const data = build();
+      if (data === undefined) return; // 아직 첫 데이터가 다 안 옴
       const json = JSON.stringify(data);
-      if (json !== last) {
+      if (force || json !== last) {
         last = json;
         callback(data);
       }
     };
-    const onStorage = (e) => { if (!e.key || e.key.startsWith(PREFIX)) tick(); };
-    tick();
-    const timer = setInterval(tick, intervalMs);
-    window.addEventListener('storage', onStorage);
-    const stop = () => {
-      clearInterval(timer);
-      window.removeEventListener('storage', onStorage);
-    };
-    stop.refresh = tick;
-    return stop;
+    const stop = () => unsubs.forEach((u) => u());
+    stop.refresh = async () => emit(true);
+    return { stop, emit };
+  }
+
+  /** 모둠 데이터(정리 + 1~4번) 실시간 지켜보기. callback({summary, members}) */
+  function watchGroup(group, callback) {
+    let summary;          // undefined = 아직 못 받음
+    let members;
+    const unsubs = [];
+    const w = makeWatcher(callback, unsubs, () =>
+      (summary === undefined || members === undefined) ? undefined : { summary, members });
+
+    unsubs.push(groupRef(group).onSnapshot((s) => { summary = docData(s); w.emit(); }, onError));
+    unsubs.push(membersCol(group).onSnapshot((q) => { members = toMemberList(q); w.emit(); }, onError));
+    return w.stop;
+  }
+
+  /** 1~6모둠 전체 실시간 지켜보기 (교사 results용). callback(getAllGroups()와 같은 형식) */
+  function watchAll(callback) {
+    let summaries;               // { '1': {...}, ... }
+    const members = {};          // { 1: [...], ... }
+    const unsubs = [];
+    const w = makeWatcher(callback, unsubs, () => {
+      if (summaries === undefined || range(GROUPS).some((g) => !members[g])) return undefined;
+      return range(GROUPS).map((g) => ({
+        group: g,
+        summary: summaries[g] || null,
+        members: members[g],
+      }));
+    });
+
+    unsubs.push(groupsCol().onSnapshot((q) => {
+      summaries = {};
+      q.forEach((d) => { summaries[d.id] = d.data(); });
+      w.emit();
+    }, onError));
+    range(GROUPS).forEach((g) => {
+      unsubs.push(membersCol(g).onSnapshot((q) => { members[g] = toMemberList(q); w.emit(); }, onError));
+    });
+    return w.stop;
   }
 
   return {
