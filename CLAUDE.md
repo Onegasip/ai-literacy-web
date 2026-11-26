@@ -12,6 +12,7 @@
 - 페이지마다 html / css / js 파일을 **따로 분리**한다. (예: `student/story.html` + `css/story.css` + `js/story.js`)
 - 공통 스타일은 `css/common.css`, 공통 기능은 `js/common.js`.
 - 스크립트는 ES 모듈이 아닌 일반 `<script>`로 불러온다. 순서: `js/db.js` → `js/common.js` → 페이지 js.
+- html이 불러오는 css/js에는 버전 표시 `?v=날짜+글자`(예: `?v=20261126a`)를 붙이고, **배포할 때마다 모든 html의 버전을 함께 올린다.** (GitHub Pages는 10분 캐시라, 안 바꾸면 새 js와 옛 js가 섞여 화면이 깨질 수 있음)
 - 모든 경로는 **상대 경로**로 쓴다. (GitHub Pages 하위 경로 `/<저장소이름>/`에서도 동작해야 함)
 - JSON을 `fetch`로 읽으므로 로컬 확인은 VS Code Live Server 또는 `python -m http.server`로 한다. (`file://`로 열면 JSON을 못 읽음)
 
