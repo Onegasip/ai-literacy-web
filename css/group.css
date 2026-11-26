@@ -19,14 +19,14 @@
   flex-direction: column;
   gap: 12px;
   padding: 20px 22px;
-  border: 3px solid transparent;
+  border: 2px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
 }
 .member-card.is-me {
-  border-color: var(--primary);
-  background: #f2f6ff;
+  border: 3px solid var(--ink);
+  box-shadow: 0 4px 0 var(--ink);
 }
 
 .member-head { display: flex; align-items: center; gap: 12px; }
@@ -37,27 +37,37 @@
   justify-content: center;
   width: 1.9em;
   height: 1.9em;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   background: var(--ink);
   color: #fff;
-  font-weight: 900;
+  font-weight: 800;
   font-size: var(--fs-lg);
 }
-.member-card.is-me .member-num { background: var(--primary); }
 .member-story { font-weight: 700; min-width: 0; }
 .me-tag {
   margin-left: auto;
-  padding: 0.15em 0.7em;
-  border-radius: 999px;
-  background: var(--primary);
-  color: #fff;
+  padding: 0.05em 0.6em;
+  border: 2px solid var(--ink);
+  outline: 1.5px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 7px;
+  color: var(--ink);
   font-size: var(--fs-sm);
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
+  transform: rotate(-3deg);
 }
 
 .member-item { margin: 0; }
-.member-item dt { font-weight: 700; font-size: var(--fs-sm); }
+/* 능력·한계 작은 표시 (도장 색과 같게) */
+.member-item dt {
+  display: inline-block;
+  padding: 0 0.5em;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: var(--fs-sm);
+}
 .member-item dt.strength { color: var(--strength); }
 .member-item dt.limit { color: var(--limit); }
 .member-item dd { margin: 2px 0 0; white-space: pre-line; }
@@ -68,7 +78,7 @@
   align-items: center;
   justify-content: center;
   min-height: 5em;
-  border: 2px dashed var(--line);
+  border: 2px dashed var(--line-strong);
   border-radius: var(--radius-sm);
   color: var(--ink-soft);
   font-weight: 700;
@@ -88,7 +98,7 @@
 .refresh-note { font-size: var(--fs-sm); margin: 10px 0 0; text-align: right; }
 
 /* ---------- 모둠 정리 ---------- */
-.summary-card { margin-top: calc(var(--gap) * 1.6); border-top: 6px solid var(--accent); }
+.summary-card { margin-top: calc(var(--gap) * 1.6); border-top: 6px solid var(--ink); }
 .summary-card .textarea { min-height: 6em; font-size: var(--fs-lg); }
 .summary-card .field-label { font-size: var(--fs-lg); }
 
@@ -96,12 +106,12 @@
   display: inline-block;
   padding: 0.3em 0.9em;
   border-radius: var(--radius-sm);
-  background: #fff3e6;
-  color: #a85a12;
+  background: var(--accent-soft);
+  color: #1A4E9C;
   font-weight: 700;
 }
 
-.textarea.is-invalid { border-color: var(--danger); background: #fff5f5; }
+.textarea.is-invalid { border-color: var(--danger); background: var(--danger-soft); }
 .field-error { display: block; margin-top: 6px; color: var(--danger); font-weight: 700; }
 
 .summary-actions {

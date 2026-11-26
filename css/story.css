@@ -1,9 +1,10 @@
 /* student/story.html — 이야기 보기 (장면 / 영상) */
 
+/* 화자 이름표 색 — AI는 모든 페이지의 AI 색(보라)과 같게 */
 :root {
-  --role-narrator: #6b7385;  /* 해설 */
-  --role-student: #2f6fdf;   /* 학생 */
-  --role-ai: #8a4fd8;        /* AI */
+  --role-narrator: var(--ink-soft);  /* 해설 */
+  --role-student: #1F5FB0;           /* 학생 */
+  --role-ai: var(--ai);              /* AI */
 }
 
 .story-main { max-width: 1000px; padding-bottom: 40px; }
@@ -21,14 +22,14 @@
   height: 10px;
   margin-bottom: 20px;
   border-radius: 999px;
-  background: var(--line);
+  background: #C9D4DD;
   overflow: hidden;
 }
 .progress-bar span {
   display: block;
   height: 100%;
   width: 0;
-  background: var(--primary);
+  background: var(--ink);
   border-radius: inherit;
   transition: width 0.25s;
 }
@@ -47,8 +48,10 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   max-height: 52vh;
+  padding: 8px;
+  border: 2px solid var(--line);
   border-radius: var(--radius);
-  background: #1f2a44;
+  background: var(--surface);   /* 그림을 노트에 붙인 종이처럼 */
   overflow: hidden;
   box-shadow: var(--shadow);
 }
@@ -58,6 +61,7 @@
   height: 100%;
   object-fit: contain;
   display: block;
+  border-radius: 8px;
 }
 
 /* 그림/영상이 없을 때 */
@@ -67,8 +71,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: repeating-linear-gradient(45deg, #d9d6ce 0 18px, #d2cfc6 18px 36px);
-  color: #6f6a5e;
+  background: repeating-linear-gradient(45deg, #E3E9EE 0 18px, #D9E1E8 18px 36px);
+  color: var(--ink-soft);
   font-size: var(--fs-lg);
   font-weight: 700;
 }
@@ -76,33 +80,50 @@
 .scene-talk {
   position: relative;
   margin-top: 28px;
-  padding: 36px 28px 24px;
+  padding: 36px 28px 24px 34px;
   min-height: 7em;
+  border: 2px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
-  border-top: 6px solid var(--role-color, var(--role-narrator));
 }
-
+/* 노트 여백선 — 지금 말하는 사람의 색 */
+.scene-talk::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 16px;
+  bottom: 16px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--role-color, var(--role-narrator));
+}
+/* 화자 이름표 = 관찰 도장 */
 .speaker-tag {
   position: absolute;
-  top: -22px;
+  top: -20px;
   left: 24px;
-  padding: 0.25em 1em;
-  border-radius: 999px;
-  background: var(--role-color, var(--role-narrator));
-  color: #fff;
-  font-weight: 900;
-  font-size: var(--fs-lg);
+  padding: 0.1em 0.85em;
+  border: 2.5px solid var(--role-color, var(--role-narrator));
+  outline: 1.5px solid var(--role-color, var(--role-narrator));
+  outline-offset: 2px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--role-color, var(--role-narrator));
+  font-weight: 800;
+  font-size: var(--fs-sm);
+  transform: rotate(-2deg);
 }
 .speaker-tag:empty { display: none; }
 
 .scene-talk[data-role="narrator"] { --role-color: var(--role-narrator); }
 .scene-talk[data-role="student"]  { --role-color: var(--role-student); }
-.scene-talk[data-role="ai"]       { --role-color: var(--role-ai); }
+.scene-talk[data-role="ai"]       { --role-color: var(--role-ai); background: #FBF9FF; }
 .scene-talk[data-role="narrator"] .scene-text { color: var(--ink-soft); }
 
-.scene-text { font-size: var(--fs-lg); margin: 0; white-space: pre-line; }
+.scene-text { color: var(--ink-soft); }
+
+.scene-text { font-size: var(--fs-lg); font-weight: 600; line-height: 1.55; margin: 0; white-space: pre-line; }
 
 .tap-hint { text-align: center; color: var(--ink-soft); font-size: var(--fs-sm); margin: 12px 0 0; }
 
@@ -114,7 +135,7 @@
   margin-top: 20px;
 }
 .nav-btn { min-width: 8em; font-size: var(--fs-lg); }
-.finish-btn { flex: 1; max-width: 640px; margin-left: auto; background: var(--accent); }
+.finish-btn { --btn-edge: #174A96; flex: 1; max-width: 640px; margin-left: auto; background: var(--accent); border-color: var(--accent); }
 
 /* 영상 모드: [다음]/[이전] 없이 끝나면 버튼만 가운데 */
 .story-nav.video-only { justify-content: center; }
@@ -151,7 +172,7 @@
     max-height: none;
     aspect-ratio: auto;
   }
-  .scene-talk { flex: none; margin-top: 22px; padding: 28px 24px 16px; min-height: 0; }
+  .scene-talk { flex: none; margin-top: 22px; padding: 28px 24px 16px 32px; min-height: 0; }
   .tap-hint { display: none; }
 
   .story-nav {
@@ -160,7 +181,13 @@
     flex: none;
     margin-top: 10px;
     padding: 10px 0 12px;
-    background: var(--bg);
+    /* 모눈 바탕을 그대로 이어서 */
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-attachment: fixed;
   }
   .nav-btn { min-height: 56px; }
 }

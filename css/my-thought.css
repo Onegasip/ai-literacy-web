@@ -5,18 +5,19 @@
 .thought-who {
   display: inline-block;
   margin: 0 0 12px;
-  padding: 0.3em 1em;
-  border-radius: 999px;
-  background: var(--ink);
-  color: #fff;
-  font-weight: 700;
+  padding: 0.2em 0.9em;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
 }
 .thought-title { font-size: var(--fs-xl); }
 
 .thought-form .textarea { min-height: 6.5em; font-size: var(--fs-lg); }
 .thought-form .field-label { font-size: var(--fs-lg); }
 
-.textarea.is-invalid { border-color: var(--danger); background: #fff5f5; }
+.textarea.is-invalid { border-color: var(--danger); background: var(--danger-soft); }
 .field-error { display: block; margin-top: 6px; color: var(--danger); font-weight: 700; }
 
 .thought-actions {
@@ -58,7 +59,9 @@
   .next-btn { min-height: 72px; }
 }
 .next-btn {
+  --btn-edge: #174A96;
   width: 100%;
   background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
