@@ -1,4 +1,8 @@
-/* my-thought.js — 내가 찾은 AI의 장점/한계 쓰기 → DB.saveMember */
+/* my-thought.js — 내가 찾은 AI의 장점/한계 쓰기 → DB.saveMember
+ *  선택이 풀리면(교사 [선택 풀기]·모둠 초기화) 저장하지 않고 이야기 선택 화면으로 보낸다
+ *   - 화면을 보는 중: DB.watchGroup 으로 바로 알아챔
+ *   - 저장 직전: checkClaim 으로 한 번 더 확인
+ *   - 그래도 저장되면: 보안 규칙이 거절 → err.code 'released' */
 
 document.addEventListener('DOMContentLoaded', async () => {
   const student = requireStudent(true);
@@ -15,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     limit: document.getElementById('limitError'),
   };
   const saveState = document.getElementById('saveState');
+  const deviceId = getDeviceId();
   const nextBox = document.getElementById('nextBox');
   let dirty = false;
 
@@ -74,8 +79,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     setState('saving');
+    const doneNotice = slowSaveNotice(); // 3.5초 넘게 걸리면 "인터넷이 끊겼어요" 안내
     try {
-      const doc = await DB.saveMember(group, member, data);
+      // 저장 직전 확인: 선택이 풀렸으면 저장하지 않는다 (null = 연결 안 됨 → 막지 않음)
+      const claim = await withTimeout(checkClaim(student), 2500, null);
+      if (claim === false) {
+        doneNotice();
+        dirty = false;
+        leaveReleased();
+        return;
+      }
+      const doc = await DB.saveMember(group, member, data, deviceId);
+      doneNotice();
       nextBox.hidden = false;
       // 저장하는 동안 글을 더 고쳤으면 '저장됨'이 아니다
       if (same(current(), data)) {
@@ -87,9 +102,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast('고친 내용이 있어요. 한 번 더 저장해 주세요');
       }
     } catch (err) {
+      doneNotice();
+      if (err?.code === 'released') {   // 저장하는 사이 선택이 풀림
+        dirty = false;
+        leaveReleased();
+        return;
+      }
       console.error(err);
       setState('dirty');
       showToast('저장하지 못했어요. 연결을 확인하고 다시 눌러 주세요', 3000);
+    }
+  });
+
+  /* 실시간: 내 선택이 풀리면 바로 안내하고 이야기 선택 화면으로 (group.js와 같은 방식) */
+  DB.watchGroup(group, ({ members }) => {
+    const me = members.find((m) => m.member === member);
+    if (me?.claimedBy !== deviceId) {
+      dirty = false;
+      leaveReleased();
     }
   });
 
@@ -126,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 선택이 풀렸거나(선생님 [선택 풀기]·모둠 초기화) 다른 기기의 번호면 다시 고르기
-  if (saved?.claimedBy !== getDeviceId()) {
+  if (saved?.claimedBy !== deviceId) {
     dirty = false;
     leaveReleased();
     return;

@@ -81,10 +81,42 @@ async function checkClaim(student) {
 }
 
 /** 선택이 풀렸을 때: 번호 지우고 이야기 선택 화면으로 */
+let leaving = false;
 function leaveReleased() {
+  if (leaving) return;
+  leaving = true;
   setStudent({ member: null });
   setFlash('이야기 선택이 풀렸어요. 이야기를 다시 골라 주세요.');
   location.href = ROOT + 'student/stories.html';
+}
+
+/* ---------- 저장이 오래 걸릴 때 (인터넷 끊김) 안내 ----------
+ * 저장을 시작할 때 부르고, 저장이 끝나면(성공·실패 모두) 반환된 함수를 부른다.
+ * ms 안에 안 끝나면 화면 위에 큰 안내를 띄운다. Firebase는 연결되면 자동으로 저장한다. */
+const SLOW_SAVE_MSG = '📶 인터넷이 끊겼어요. 연결되면 자동으로 저장돼요.\n화면을 끄거나 새로고침하지 마세요.';
+function slowSaveNotice(ms = 3500) {
+  const timer = setTimeout(() => showNetBanner(SLOW_SAVE_MSG), ms);
+  return () => { clearTimeout(timer); hideNetBanner(); };
+}
+function showNetBanner(msg) {
+  let el = document.querySelector('.net-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'net-banner';
+    el.setAttribute('role', 'alert');
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.hidden = false;
+}
+function hideNetBanner() {
+  const el = document.querySelector('.net-banner');
+  if (el) el.hidden = true;
+}
+
+/** 약속(Promise)이 ms 안에 안 끝나면 fallback 값으로 끝낸다 */
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(fallback), ms))]);
 }
 
 /* ---------- 다음 페이지에 보여줄 안내 (페이지를 옮겨도 남게) ---------- */
@@ -198,8 +230,11 @@ function confirmDialog(message, { okText = '확인', cancelText = '취소', dang
 function downloadCSV(filename, rows) {
   const cell = (v) => {
     let s = String(v ?? '');
-    // =, +, -, @ 로 시작하면 엑셀이 수식으로 읽을 수 있으므로 앞에 ' 를 붙인다
-    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    // 엑셀이 수식으로 읽을 수 있는 글 앞에만 ' 를 붙인다
+    //  - =, @, 탭, 줄바꿈으로 시작
+    //  - + 나 - 뒤에 숫자·수식 기호가 오는 경우 (예: "-3+5", "+=A1")
+    //  "-틀릴 수 있어요"처럼 - 뒤에 글자가 오면 그대로 둔다
+    if (/^[=@\t\r\n]/.test(s) || /^[+\-]\s*[\d.=+\-@(]/.test(s)) s = "'" + s;
     return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const csv = rows.map((r) => r.map(cell).join(',')).join('\r\n');

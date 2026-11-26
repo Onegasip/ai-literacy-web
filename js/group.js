@@ -145,8 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       saveState.className = 'save-state';
       saveState.textContent = '저장하는 중…';
+      const doneNotice = slowSaveNotice(); // 3.5초 넘게 걸리면 "인터넷이 끊겼어요" 안내
       try {
         const doc = await DB.saveGroupSummary(group, data);
+        doneNotice();
         // 저장하는 동안 글을 더 고쳤으면 '저장됨'이 아니다
         const now = { strength: fields.strength.value.trim(), limit: fields.limit.value.trim() };
         if (now.strength === data.strength && now.limit === data.limit) {
@@ -158,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast('고친 내용이 있어요. 한 번 더 저장해 주세요');
         }
       } catch (err) {
+        doneNotice();
         console.error(err);
         setState('dirty');
         showToast('저장하지 못했어요. 연결을 확인하고 다시 눌러 주세요', 3000);

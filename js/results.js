@@ -123,9 +123,11 @@ function renderDetail(g) {
       ${members.map((m) => `
         <section class="member-box${m.claimedBy ? '' : ' is-unclaimed'}">
           <h3>${m.member}번 <small>${isDone(m) ? formatTime(m.updatedAt) : ''}</small></h3>
-          ${isDone(m)
-            ? item('👍 장점', 'strength', m.strength) + item('🤔 한계', 'limit', m.limit)
-            : `<p class="sum-empty">${m.claimedBy ? '아직 작성 중이에요' : '아직 고른 학생이 없어요'}</p>`}
+          <div class="member-text">
+            ${isDone(m)
+              ? item('👍 장점', 'strength', m.strength) + item('🤔 한계', 'limit', m.limit)
+              : `<p class="sum-empty">${m.claimedBy ? '아직 작성 중이에요' : '아직 고른 학생이 없어요'}</p>`}
+          </div>
           <div class="member-foot">
             ${m.claimedBy
               ? `<button type="button" class="btn btn-ghost release-btn" data-release="${m.member}">선택 풀기</button>`

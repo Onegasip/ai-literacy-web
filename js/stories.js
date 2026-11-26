@@ -1,6 +1,7 @@
 /* stories.js — 이야기 1~4 선택. 고른 이야기 번호 = 학생 번호
  *  같은 모둠에서 한 이야기는 한 기기만 고를 수 있다 (DB.claimMember)
- *  다른 기기가 고른 카드: "○번 친구가 골랐어요" + 비활성화 / 내 기기가 고른 카드: 다시 들어가기
+ *  다른 기기가 고른 카드: "○번 친구가 골랐어요" + 비활성화
+ *  내 기기가 고른 카드: [이야기 다시 보기] / [내 생각 쓰러 가기] 두 버튼
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function makeCard(id) {
     const story = stories[id];
     const state = stateOf(id);
+    if (state === 'mine') return makeMineCard(id, story);
     const card = document.createElement('button');
     card.type = 'button';
     card.className = `story-card is-${state}` + (story ? '' : ' is-error');
@@ -53,7 +55,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const title = story ? story.title : `이야기 ${id}`;
     const intro = story ? story.intro : '이야기를 불러오지 못했어요.';
     const tag = {
-      mine: '<span class="story-tag tag-mine">✔ 내가 고른 이야기 — 다시 들어가기</span>',
       taken: `<span class="story-tag tag-taken">🔒 ${id}번 친구가 골랐어요</span>`,
       loading: '<span class="story-tag tag-loading">확인 중…</span>',
       free: '',
@@ -69,6 +70,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     card.disabled = !story || state === 'taken' || state === 'loading' || busy;
     card.addEventListener('click', () => pick(id));
+    return card;
+  }
+
+  /* 내가 고른 카드: 카드 안에 버튼 두 개 (버튼 안에 버튼을 넣을 수 없어 div로 만든다) */
+  function makeMineCard(id, story) {
+    const card = document.createElement('div');
+    card.className = 'story-card is-mine' + (story ? '' : ' is-error');
+    const title = story ? story.title : `이야기 ${id}`;
+    const intro = story ? story.intro : '이야기를 불러오지 못했어요.';
+    card.innerHTML = `
+      <span class="story-num">${id}</span>
+      <span class="story-body">
+        <span class="story-name">${escapeHtml(title)}</span>
+        <span class="story-intro">${escapeHtml(intro)}</span>
+        <span class="story-tag tag-mine">✔ 내가 고른 이야기</span>
+        <span class="mine-actions">
+          <button type="button" class="btn btn-ghost mine-btn" data-go="story">📖 이야기 다시 보기</button>
+          <button type="button" class="btn btn-primary mine-btn" data-go="thought">✏️ 내 생각 쓰러 가기</button>
+        </span>
+      </span>`;
+    card.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-go]');
+      if (!btn || busy) return;
+      setStudent({ member: id });
+      goTo(btn.dataset.go === 'story' ? `student/story.html?id=${id}` : 'student/my-thought.html');
+    });
     return card;
   }
 

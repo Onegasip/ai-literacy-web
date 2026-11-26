@@ -160,3 +160,53 @@
 .member-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
 .release-btn { min-height: 48px; font-size: max(16px, 0.7rem); padding: 0 0.9em; }
 .claim-none { color: var(--ink-soft); font-size: max(16px, 0.65rem); }
+
+/* ---------- 크게 보기: 넓은 가로 화면에서 한 화면에 ----------
+ * 모둠 정리(위) + 1~4번 칸(아래, 4열 / 좁으면 2×2). 긴 글은 각 칸 안에서만 스크롤,
+ * [선택 풀기] 버튼은 칸 아래에 항상 보임 */
+@media (min-width: 960px) and (orientation: landscape) {
+  .detail-overlay { padding: 16px; }
+  .detail { min-height: 0; }
+  .detail-head { flex: none; padding: 10px 24px; }
+  .detail-body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--gap) * 0.8);
+    min-height: 0;
+    overflow: hidden;
+    padding: 16px 24px;
+  }
+  .detail-summary {
+    flex: 0 1 auto;
+    max-height: 34%;
+    min-height: 0;
+    margin: 0;
+    padding: 14px 22px;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+  .detail-summary .sum-item { display: flex; flex-direction: column; min-height: 0; }
+  .detail-summary .sum-item dd { overflow-y: auto; min-height: 0; }
+
+  .detail-members {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .member-box {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 14px 18px;
+  }
+  .member-box h3 { flex: none; margin-bottom: 6px; }
+  .member-text { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
+  .member-box .sum-empty { min-height: 3em; height: 100%; }
+  .member-foot { flex: none; margin-top: 10px; }
+}
+@media (min-width: 960px) and (max-width: 1199px) and (orientation: landscape) {
+  .detail-members {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+}

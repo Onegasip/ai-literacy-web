@@ -7,8 +7,10 @@
  *
  * 데이터 구조 (Firestore 경로와 같음)
  *   groups/{1~6}                 { strength, limit, updatedAt }  모둠 정리
- *   groups/{1~6}/members/{1~4}   { strength, limit, updatedAt }  개인 생각
- *   judge/{사례id}                { firstO, firstX, finalO, finalX, updatedAt }  O/X 인원
+ *   groups/{1~6}/members/{1~4}   { strength, limit, updatedAt, claimedBy, claimedAt }  개인 생각
+ *   judge/{사례id}                { firstO, firstX, finalO, finalX, updatedAt, rev }  O/X 인원
+ *
+ *   db.js와 같은 함수·같은 결과. 보안 규칙이 하는 검사(선택이 풀린 번호에 저장 거절)도 흉내 낸다.
  *
  *   strength = 장점(능력), limit = 한계, updatedAt = 저장 시각(ms)
  *   localStorage 키 = "ailit:" + 경로
@@ -81,8 +83,14 @@ const DB = (() => {
     return readDoc(memberPath(group, member));
   }
 
-  /** 학생 개인 생각 저장 */
-  async function saveMember(group, member, { strength, limit }) {
+  /** 학생 개인 생각 저장 — db.js와 같게, 이 기기가 고른 번호가 아니면 err.code 'released' */
+  async function saveMember(group, member, { strength, limit }, deviceId) {
+    const cur = readDoc(memberPath(group, member));
+    if (!cur?.claimedBy || cur.claimedBy !== deviceId) {
+      const e = new Error('이 번호(이야기)의 선택이 풀렸거나 다른 기기 것이에요');
+      e.code = 'released';
+      throw e;
+    }
     return writeDoc(memberPath(group, member), { strength, limit });
   }
 
@@ -134,23 +142,35 @@ const DB = (() => {
   /* ---------- AI 활용 판단 O/X 기록 (judge/{사례id}) ---------- */
   const judgePath = (caseId) => `judge/${caseId}`;
   const toCount = (n) => Math.max(0, Math.floor(Number(n) || 0));
+  const JUDGE_KEYS = ['firstO', 'firstX', 'finalO', 'finalX'];
+  const normJudge = (d) => ({
+    firstO: toCount(d?.firstO), firstX: toCount(d?.firstX),
+    finalO: toCount(d?.finalO), finalX: toCount(d?.finalX),
+    updatedAt: Number(d?.updatedAt) || 0,
+    rev: toCount(d?.rev),
+  });
 
   /** 사례 하나의 O/X 기록 → {firstO, firstX, finalO, finalX, updatedAt} 또는 null */
   async function getJudge(caseId) {
     return readDoc(judgePath(caseId));
   }
 
-  /** 사례 O/X 기록 저장 (0 이상의 정수로 정리) */
-  async function saveJudge(caseId, { firstO, firstX, finalO, finalX }) {
-    const doc = {
-      firstO: toCount(firstO),
-      firstX: toCount(firstX),
-      finalO: toCount(finalO),
-      finalX: toCount(finalX),
-      updatedAt: Date.now(),
-    };
-    localStorage.setItem(PREFIX + judgePath(caseId), JSON.stringify(doc));
-    return doc;
+  /** O/X 한 칸만 step만큼 바꾸기 — db.js changeJudge와 같은 규칙 (0 이상, 단계 합계 ≤ maxTotal) */
+  async function changeJudge(caseId, key, step, maxTotal) {
+    if (!JUDGE_KEYS.includes(key)) throw new Error(`[DB] 알 수 없는 칸: ${key}`);
+    const cur = normJudge(readDoc(judgePath(caseId)));
+    const stage = key.startsWith('first') ? 'first' : 'final';
+    const value = cur[key] + step;
+    if (value < 0) return cur;
+    if (step > 0 && cur[`${stage}O`] + cur[`${stage}X`] + step > maxTotal) return cur;
+    const next = { ...cur, [key]: value, updatedAt: Date.now(), rev: cur.rev + 1 };
+    localStorage.setItem(PREFIX + judgePath(caseId), JSON.stringify(next));
+    return next;
+  }
+
+  /** 사례 하나의 O/X 기록 지켜보기. callback(기록 | null) — 1초마다 + 다른 탭 변경 */
+  function watchJudge(caseId, callback, intervalMs = 1000) {
+    return poll(async () => readDoc(judgePath(caseId)), callback, intervalMs);
   }
 
   /** 모든 사례 기록 → { 사례id: {...}, ... } (CSV 내보내기용) */
@@ -218,7 +238,8 @@ const DB = (() => {
     resetGroup,
     resetAll,
     getJudge,
-    saveJudge,
+    changeJudge,
+    watchJudge,
     getAllJudges,
   };
 })();

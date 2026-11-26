@@ -17,14 +17,18 @@
 - `js/db.local.js`는 예전 localStorage 버전 백업. Firebase 없이 시험할 때 SDK 두 줄과 db.js 대신 불러오면 된다.
 - DB 데이터는 `DB.함수()`로만 다루고 Firestore를 직접 쓰지 않는다. db 함수는 모두 `async`.
 - localStorage는 **기기 설정만** `js/common.js`에서 쓴다: 학생 모둠·번호(`setStudent`/`getStudent`), 기기 ID(`getDeviceId`). 다른 파일에서 직접 쓰지 않는다.
-- 실시간 화면은 `DB.watchGroup` / `DB.watchAll`(onSnapshot)로 받는다. 반환값은 멈추는 함수, `.refresh()`로 다시 받기.
+- 실시간 화면은 `DB.watchGroup` / `DB.watchAll` / `DB.watchJudge`(onSnapshot)로 받는다. 반환값은 멈추는 함수, `.refresh()`로 다시 받기.
+- 학생 글 저장은 `DB.saveMember(g, m, data, deviceId)` — claimedBy를 함께 보내고, 선택이 풀렸거나 남의 번호면 규칙이 거절 → `err.code === 'released'` → `leaveReleased()`. my-thought는 저장 직전 `checkClaim`도 확인하고, `watchGroup`으로 풀림을 바로 알아챈다.
+- 판단 O/X는 `DB.changeJudge(caseId, key, ±1, CLASS_SIZE)`(트랜잭션, 한 칸씩)로만 바꾼다. judge.js는 누름을 줄(queue)에 넣고 하나씩 보내며, 저장 중에 온 실시간 값은 `rev`가 큰 것만 쓴다.
+- 저장이 3.5초 넘게 안 끝나면 `slowSaveNotice()`(common.js)가 "인터넷이 끊겼어요…" 안내를 띄운다.
 - 보안 규칙은 `firestore.rules`. 고치면 Firebase 콘솔 → Firestore → 규칙에 붙여넣고 [게시]. 글자 수 제한(300자)·인원 제한(0~999)은 db.js 상수와 맞춘다.
+- members 규칙: 글(strength/limit/updatedAt)을 쓰거나 바꾸는 쓰기는 기존·새 문서의 claimedBy가 둘 다 있고 같을 때만 허용. 새 문서는 이야기 고르기(claimedBy/claimedAt)로만 만든다. 선택 풀기(claimedBy/claimedAt만 지우기)는 허용.
 - 회차(세션) 기능은 없다. 데이터 구조:
 
 ```
 groups/{1~6}                  { strength, limit, updatedAt }   ← 모둠이 정리한 장점/한계
 groups/{1~6}/members/{1~4}    { strength, limit, updatedAt, claimedBy, claimedAt }   ← 학생 개인 생각 + 고른 기기
-judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt }  ← AI 활용 판단 O/X 인원(처음/최종)
+judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt, rev }  ← AI 활용 판단 O/X 인원(처음/최종), rev = 바뀐 횟수
 ```
 - 전체 초기화(`DB.resetAll`)와 CSV 내보내기는 모둠 결과 + judge 기록을 모두 포함한다.
 - 필드: `strength` = 장점(능력, 300자까지), `limit` = 한계(300자까지), `updatedAt` = 저장 시각(ms 숫자). 입력칸 `maxlength`도 300.

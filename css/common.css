@@ -277,3 +277,24 @@ body.teacher .container { max-width: 1840px; padding-top: calc(var(--pad) * 0.6)
 .muted { color: var(--ink-soft); }
 .center { text-align: center; }
 [hidden] { display: none !important; }
+
+/* ---------- 인터넷 끊김 안내 (저장이 오래 걸릴 때, js/common.js slowSaveNotice) ---------- */
+.net-banner {
+  position: fixed;
+  left: 50%;
+  top: 12px;
+  z-index: 150;
+  transform: translateX(-50%);
+  width: min(94vw, 760px);
+  padding: 14px 22px;
+  border: 3px solid #e0a100;
+  border-radius: var(--radius);
+  background: #fff6d6;
+  color: #5b4300;
+  font-size: var(--fs-lg);
+  font-weight: 900;
+  line-height: 1.45;
+  text-align: center;
+  white-space: pre-line;
+  box-shadow: 0 8px 24px rgba(31, 42, 68, 0.25);
+}
