@@ -7,7 +7,7 @@
 
 .reset-note {
   margin: 0 0 calc(var(--gap) * 0.6);
-  color: #a85a12;
+  color: #8F4A00;
   font-size: max(16px, 0.7rem);
   font-weight: 700;
 }
@@ -36,6 +36,7 @@
   min-height: 0;
   overflow: hidden;
   padding: calc(var(--pad) * 0.7) calc(var(--pad) * 0.8);
+  border: 2px solid var(--line);
   border-radius: var(--radius);
   border-top: 10px solid var(--gc);
   background: var(--surface);
@@ -44,30 +45,34 @@
   transition: transform 0.1s;
 }
 .group-card:hover { transform: translateY(-3px); }
-.group-card:focus-visible { outline: 5px solid var(--accent); outline-offset: 4px; }
-
-.group-card[data-g="1"] { --gc: var(--g1); }
-.group-card[data-g="2"] { --gc: var(--g2); }
-.group-card[data-g="3"] { --gc: var(--g3); }
-.group-card[data-g="4"] { --gc: var(--g4); }
-.group-card[data-g="5"] { --gc: var(--g5); }
-.group-card[data-g="6"] { --gc: var(--g6); }
+.group-card:focus-visible { outline: 5px solid var(--focus); outline-offset: 4px; }
+/* 모둠 색·모양은 common.css 의 [data-g] 토큰 */
 
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; }
-.card-name { margin: 0; font-size: var(--fs-lg); font-weight: 900; color: var(--gc); }
+.card-name { display: flex; align-items: center; gap: 0.35em; margin: 0; font-size: var(--fs-lg); font-weight: 800; color: var(--gc-text); }
+/* 모둠 모양 (색약 구분용) */
+.card-name::before {
+  content: '';
+  flex: none;
+  width: 0.8em;
+  height: 0.8em;
+  background: var(--gc);
+  clip-path: var(--shape);
+}
 
 .progress-pill {
   padding: 0.1em 0.7em;
   border-radius: 999px;
-  background: #eeeae0;
+  border: 2px solid var(--line);
+  background: var(--surface-dim);
   font-size: var(--fs-sm);
   font-weight: 700;
   white-space: nowrap;
 }
-.progress-pill.is-full { background: var(--strength); color: #fff; }
+.progress-pill.is-full { background: var(--strength); border-color: var(--strength); color: #fff; }
 
 .sum-item { margin: 0; min-width: 0; }
-.sum-item dt { font-size: var(--fs-sm); font-weight: 900; }
+.sum-item dt { font-size: var(--fs-sm); font-weight: 800; }
 .sum-item dt.strength { color: var(--strength); }
 .sum-item dt.limit { color: var(--limit); }
 .sum-item dd {
@@ -87,7 +92,7 @@
   justify-content: center;
   margin: 0;
   min-height: 2.5em;
-  border: 3px dashed var(--line);
+  border: 3px dashed var(--line-strong);
   border-radius: var(--radius-sm);
   color: var(--ink-soft);
   font-weight: 700;
@@ -108,6 +113,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  border: 2px solid var(--line);
   border-radius: var(--radius);
   border-top: 12px solid var(--gc, var(--ink));
   overflow: hidden;
@@ -129,6 +135,7 @@
   gap: var(--gap);
   margin-bottom: var(--gap);
   padding: 20px 26px;
+  border: 2px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -147,6 +154,7 @@
 .member-box {
   min-width: 0;
   padding: 20px 24px;
+  border: 2px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -156,7 +164,7 @@
 .member-box .sum-item + .sum-item { margin-top: 12px; }
 .detail .sum-item dd { display: block; -webkit-line-clamp: unset; overflow: visible; }
 .member-box .sum-empty { min-height: 4em; }
-.member-box.is-unclaimed { background: #f4f1ea; box-shadow: none; }
+.member-box.is-unclaimed { background: var(--surface-dim); border-style: dashed; box-shadow: none; }
 .member-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
 .release-btn { min-height: 48px; font-size: max(16px, 0.7rem); padding: 0 0.9em; }
 .claim-none { color: var(--ink-soft); font-size: max(16px, 0.65rem); }
@@ -209,4 +217,20 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* 모둠 카드: 높이가 모자라면 글(장점·한계)이 줄어들고, 아래 시각·[초기화] 줄은 항상 보이게 */
+.group-card .sum-item { flex: 0 1 auto; min-height: 0; overflow: hidden; }
+/* 카드 안 "👍 장점 | 글" — 이름표를 글 왼쪽 칸에 두어 한 줄을 아낀다 */
+.group-card .sum-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.6em;
+  align-items: baseline;
+}
+.group-card .sum-item dd { margin: 0; }
+@media (min-width: 960px) and (orientation: landscape) and (max-height: 860px) {
+  .group-card { gap: calc(var(--gap) * 0.35); padding-top: calc(var(--pad) * 0.55); padding-bottom: calc(var(--pad) * 0.55); }
+  .group-card .sum-item dd { line-height: 1.35; }
+  .card-foot .btn { min-height: 48px; }
 }

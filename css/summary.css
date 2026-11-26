@@ -24,8 +24,8 @@
   .summary-cols { grid-template-columns: minmax(0, 1fr); }
 }
 
-.col-ability { --col: var(--strength); --col-soft: #e5f5ee; }
-.col-limit   { --col: var(--limit);    --col-soft: #fbefe2; }
+.col-ability { --col: var(--strength); --col-soft: var(--strength-soft); }
+.col-limit   { --col: var(--limit);    --col-soft: var(--limit-soft); }
 
 .col-title {
   margin-bottom: 10px;
@@ -55,7 +55,7 @@
   cursor: pointer;
   touch-action: manipulation;
 }
-.reveal:focus-visible { outline: 5px solid var(--accent); outline-offset: 4px; }
+.reveal:focus-visible { outline: 5px solid var(--focus); outline-offset: 4px; }
 
 .reveal-cover,
 .reveal-content {
@@ -93,6 +93,7 @@
   display: block;
   padding: 10px 24px;
   background: var(--surface);
+  border: 2px solid var(--line);
   border-left: 10px solid var(--col);
   box-shadow: var(--shadow);
   opacity: 0;
@@ -121,7 +122,7 @@
 .conclusion .reveal-cover { justify-content: center; background-color: var(--ink); }
 .conclusion .reveal-content {
   border-left: 0;
-  border-top: 8px solid var(--accent);
+  border-top: 8px solid var(--ink);
   padding: 14px 28px;
   text-align: center;
   font-size: 1.1rem;
