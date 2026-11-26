@@ -39,9 +39,9 @@
 
 .group-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));   /* 4모둠 = 2×2 */
   gap: var(--gap);
-  max-width: 960px;
+  max-width: 900px;
   margin: 0 auto;
   width: 100%;
 }
@@ -54,7 +54,9 @@
 .group-btn {
   position: relative;
   flex-direction: row;
-  gap: 0.35em;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 0.1em 0.35em;
   min-height: 150px;
   padding-left: calc(1.4em + 14px);
   border-left: 14px solid var(--gc);
@@ -73,6 +75,16 @@
 }
 .group-btn .group-num { font-size: 2.2em; font-weight: 800; line-height: 1; color: var(--gc-text); font-variant-numeric: tabular-nums; }
 .group-btn .group-label { font-size: 0.7em; font-weight: 700; }
+/* 맡은 이야기 제목 (둘째 줄) */
+.group-btn .group-story {
+  flex-basis: 100%;
+  margin-top: 0.2em;
+  color: var(--ink-soft);
+  font-size: 0.55em;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.35;
+}
 /* 모둠 색·모양 토큰은 common.css [data-g] */
 
 /* 교사용 버튼 — 오른쪽 아래 고정, 학생이 실수로 누르지 않게 작고 차분하게 */

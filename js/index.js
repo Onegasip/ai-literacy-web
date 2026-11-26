@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.type = 'button';
     btn.className = 'btn group-btn';
     btn.dataset.g = g;
-    btn.innerHTML = `<span class="group-num">${g}</span><span class="group-label">모둠</span>`;
+    btn.innerHTML = `<span class="group-num">${g}</span><span class="group-label">모둠</span>`
+      + `<span class="group-story" data-story="${storyOf(g)}">이야기 ${storyOf(g)}</span>`;
     btn.addEventListener('click', () => {
       // 모둠을 새로 고르면 번호는 이야기 선택 화면에서 다시 정한다
       setStudent({ group: g, member: null });
@@ -16,6 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     grid.appendChild(btn);
   }
+
+  /* 모둠이 맡은 이야기 제목 (불러오지 못하면 "이야기 N" 그대로) */
+  grid.querySelectorAll('.group-story').forEach((el) => {
+    loadJSON(`data/stories/story${el.dataset.story}.json`)
+      .then((story) => { if (story.title) el.textContent = story.title; })
+      .catch(() => {});
+  });
 
   /* 교사 비밀번호 창 */
   const modal = document.getElementById('pwModal');

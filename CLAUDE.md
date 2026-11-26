@@ -63,7 +63,7 @@ board/summary                 { abilities:[항목], limits:[항목], conclusion,
 ```
 - `role`: 이름표 색 — `"narrator"`(해설) / `"student"`(학생) / `"ai"`(AI). 없으면 화자 이름으로 추측.
 - `image`가 없거나 못 읽으면 "그림 준비 중" 회색 박스로 대신 보인다.
-- 정리 JSON 형식 (`data/summary.json`): `title`, `abilities`(능력)·`limits`(한계) 배열의 각 항목 `{ "keyword": "키워드", "desc": "한 줄 설명", "stories": [2] }`, `conclusion`(맨 아래 핵심 문장). 항목 개수는 자유.
+- 정리 JSON 형식 (`data/summary.json`): `title`, `abilities`(능력)·`limits`(한계) 배열의 각 항목 `{ "keyword": "키워드", "desc": "한 줄 설명", "stories": [2] }`, `conclusion`(맨 아래 핵심 문장). 항목 개수는 자유. **교사 참고 예시**로만 쓴다(정리 화면 [참고 예시 보기]). 수업 판서는 DB `board/summary`.
 - 판단 사례 JSON 형식 (`data/judge-cases.json`): `title`, `cases` 배열의 각 항목 `{ "id": "case1", "title": "...", "situation": "과제 설명", "image": "assets/img/judge1.png", "questions": ["질문1", "질문2", "질문3"] }`. 정답은 넣지 않는다. `id`는 O/X 기록 저장 키라서 수업 중에는 바꾸지 않는다.
 - 영상 모드: `"mode": "video"`, `"video": "assets/video/story1.mp4"`, (선택) `"poster": "assets/img/story1-poster.png"`. 영상이 끝나면(또는 영상이 없으면) [적으러 가기] 버튼이 나온다.
 
@@ -74,7 +74,8 @@ board/summary                 { abilities:[항목], limits:[항목], conclusion,
 - 6모둠은 색 + 모양 + 번호: `[data-g]`가 `--gc`(채우기), `--gc-text`(흰 바탕 글자), `--shape`(clip-path: ● ▲ ■ ◆ ★ ⬢)를 정해 준다.
 - 웹폰트는 Pretendard 1종(jsdelivr dynamic subset). 글자 대비 WCAG AA(4.5:1) 이상, 버튼 터치 영역 48px 이상, `prefers-reduced-motion` 지원.
 - 교사 페이지는 TV에 띄울 발표용 → `<html class="teacher">` + `<body class="teacher">` (html에도 있어야 rem 기준이 커짐). 글씨는 화면 높이에 맞춰 20~30px(1920×1080 ≈ 30px, 1366×768 ≈ 20px).
-- 화면 맞춤 목표: 1024×768, 1366×768, 1920×1080에서 스크롤 없이 핵심 버튼·O/X·6모둠이 보이게. 교사 결과·판단은 `.fit-screen`(100dvh) + `.fit-fill`, 학생 이야기·내 생각은 가로 화면에서 버튼 줄을 아래에 고정.
+- 화면 맞춤 목표: 학생 768×1024 / 1024×768 / 1366×768, 교사 1366×768 / 1920×1080 / 1366×657에서 스크롤 없이 핵심 버튼·4모둠 카드·친구 카드 5개·O/X·판서 항목과 입력칸이 보이게. 교사 결과·판단·정리는 `.fit-screen`(100dvh) + `.fit-fill`, 학생 내 생각·모둠은 폭 600px 이상에서 100dvh(긴 글은 칸 안에서 스크롤), 이야기는 가로 화면에서 버튼 줄을 아래에 고정.
+- 정리 판서는 넘치면 `--board-scale`로 글자 크기를 자동으로 줄인다(js/summary.js `fitBoard`). 1920×1080에서 칸마다 10개까지 한 화면.
 - 그리드 칸은 `minmax(0, 1fr)`, 본문은 `overflow-wrap: anywhere` — 띄어쓰기 없는 긴 글로 가로 넘침 방지.
 - **개인정보 최소화**: 학생 이름은 **성 빼고 이름만** 저장한다 (로그인이 없어 주소를 아는 사람은 읽을 수 있음). 수업이 끝나면 CSV로 내보낸 뒤 [전체 초기화]로 지운다. 그 밖의 개인정보는 저장하지 않는다.
 - 학생의 모둠·번호는 localStorage에 저장하고(탭을 닫아도 유지), `js/common.js`의 `setStudent()` / `getStudent()`로만 다룬다.
@@ -92,16 +93,16 @@ assets/img/
 ```
 
 ## 페이지 흐름
-1. `index.html`: 웹 제목 + 1~6모둠 선택 버튼. 오른쪽 아래 [결과 모아보기] 버튼(교사용, 비밀번호 입력 후 진입)
-2. `student/stories.html`: 이야기 1~4 선택. **고른 이야기 번호 = 학생 번호**. 같은 모둠에서 한 이야기는 한 기기만 고른다(`DB.claimMember`, 트랜잭션). 다른 기기가 고른 카드는 "○번 친구가 골랐어요" + 비활성화. 아직 글을 안 썼으면 다른 이야기로 바꿀 수 있고, 썼으면 교사 [선택 풀기]가 필요
-3. `student/story.html?id=N`: 이야기 보기 (scenes / video)
-4. `student/my-thought.html`: 내가 찾은 AI의 장점(능력)과 한계 작성 후 저장
-5. `student/group.html`: 이야기 1~4별 칸(자기 번호 칸만 작성, 다른 칸은 보기만) + "우리 모둠이 정리한 장점/한계" 공동 칸
-6. `teacher/results.html`: 1~6모둠 카드(모둠 정리 내용), 카드 클릭 시 1~4번 개인 생각 표시
+1. `index.html`: 웹 제목 + 모둠 선택 버튼 4개(2×2, 맡은 이야기 제목 표시). 오른쪽 아래 [결과 모아보기] 버튼(교사용, 비밀번호 입력 후 진입)
+2. `student/stories.html`: **번호·이름 고르기**. 위에 우리 모둠이 맡은 이야기(제목·소개·그림), 1~5번 번호 + 이름(성 빼고) 입력. 같은 모둠에서 한 번호는 한 기기만 고른다(`DB.claimMember`, 트랜잭션). 다른 기기가 고른 번호는 "🔒 이름" + 비활성화. 아직 글을 안 썼으면 다른 번호로 바꿀 수 있고, 썼으면 교사 [선택 풀기]가 필요. 이미 고른 학생에게는 [이야기 다시 보기] / [내 생각 쓰러 가기]
+3. `student/story.html`: 우리 모둠이 맡은 이야기 보기 (scenes / video, `GROUP_STORY`)
+4. `student/my-thought.html`: 내가 찾은 AI의 장점(능력)과 한계 작성 후 저장 ("○모둠 ○번 이름 · 이야기 N 제목")
+5. `student/group.html`: 친구 카드 5개(번호·이름·장점·한계, 보기만) + "우리 모둠이 정리한 장점/한계" 공동 칸(1번 = 기록 담당만 입력)
+6. `teacher/results.html`: 모둠 카드 4개(2×2: 맡은 이야기 제목, "작성 완료 n/5명", 번호·이름 칩, 모둠 정리), 카드 클릭 시 크게 보기(5명 개인 생각 + 이름 + [선택 풀기])
    - 모둠별 [초기화], [전체 초기화] — 둘 다 확인창을 띄운다
-   - [결과 내보내기(CSV)] — UTF-8 BOM을 붙여 엑셀에서 한글이 안 깨지게. 열: 모둠, 구분(모둠정리/1~4번), 장점, 한계, 수정시각
+   - [결과 내보내기(CSV)] — UTF-8 BOM을 붙여 엑셀에서 한글이 안 깨지게. 열: 모둠, 구분(모둠정리/1~5번), 이름, 장점, 한계, 수정시각 (+ AI 활용 판단, 정리 판서 부분)
    - 초기화 버튼 근처에 "초기화 전에 내보내기를 먼저 하세요" 안내
-7. `teacher/summary.html`: `data/summary.json`의 예시 정답을 보여주는 정리 페이지
+7. `teacher/summary.html`: **교사 실시간 판서**. 능력 | 한계 두 칸 + 오늘의 핵심 문장을 크게, 아래 입력 줄(키워드·설명·모둠 태그)로 추가·수정·삭제·순서 바꾸기. [발표 모드]로 입력 줄 숨김, [참고 예시 보기]로 `data/summary.json` 예시
 8. `teacher/judge.html`: `data/judge-cases.json`의 AI 활용 여부 판단 사례 제시
 
 ## 저장·복사
