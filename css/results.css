@@ -12,10 +12,10 @@
   font-weight: 700;
 }
 
-/* ---------- 모둠 카드 3×2 ---------- */
+/* ---------- 모둠 카드 2×2 ---------- */
 .result-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--gap);
 }
 @media (min-width: 960px) and (orientation: landscape) {
@@ -48,7 +48,38 @@
 .group-card:focus-visible { outline: 5px solid var(--focus); outline-offset: 4px; }
 /* 모둠 색·모양은 common.css 의 [data-g] 토큰 */
 
-.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; min-width: 0; }
+.card-head .card-name { flex: 1 1 auto; min-width: 0; }
+.card-title-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-head .progress-pill { flex: none; }
+
+/* 모둠원 이름 칩: 쓴 학생 진하게 / 쓰는 중 흐리게 / 빈 번호 */
+.name-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; flex: none; }
+.name-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.05em 0.6em 0.05em 0.35em;
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: max(15px, 0.72rem);
+  font-weight: 700;
+  line-height: 1.5;
+}
+.name-chip b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  background: var(--surface-dim);
+  font-size: 0.85em;
+}
+.name-chip.is-done { border-color: var(--strength); background: var(--strength-soft); color: var(--ink); }
+.name-chip.is-done b { background: var(--strength); color: #fff; }
+.name-chip.is-joined { border-style: dashed; color: var(--ink-soft); }
+.name-chip.is-empty { border-style: dashed; border-color: var(--line); color: #66718A; }
 .card-name { display: flex; align-items: center; gap: 0.35em; margin: 0; font-size: var(--fs-lg); font-weight: 800; color: var(--gc-text); }
 /* 모둠 모양 (색약 구분용) */
 .card-name::before {
@@ -159,7 +190,9 @@
   background: var(--surface);
   box-shadow: var(--shadow);
 }
-.member-box h3 { display: flex; justify-content: space-between; gap: 12px; }
+.member-box h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.box-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.box-who b { font-weight: 800; }
 .member-box h3 small { color: var(--ink-soft); font-weight: 400; font-size: max(16px, 0.65rem); }
 .member-box .sum-item + .sum-item { margin-top: 12px; }
 .detail .sum-item dd { display: block; -webkit-line-clamp: unset; overflow: visible; }
@@ -199,7 +232,8 @@
   .detail-members {
     flex: 1;
     min-height: 0;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));   /* 5명 한 줄 — 칸마다 글을 세로로 길게 */
+    gap: calc(var(--gap) * 0.6);
   }
   .member-box {
     display: flex;
@@ -212,11 +246,11 @@
   .member-box .sum-empty { min-height: 3em; height: 100%; }
   .member-foot { flex: none; margin-top: 10px; }
 }
+/* 좁은 가로 화면(1200px 미만, 1024×768): 칸이 좁으니 시각은 숨기고 여백을 줄임 */
 @media (min-width: 960px) and (max-width: 1199px) and (orientation: landscape) {
-  .detail-members {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-  }
+  .member-box { padding: 12px 12px; }
+  .member-box h3 small { display: none; }
+  .release-btn { padding: 0 0.6em; }
 }
 
 /* 모둠 카드: 높이가 모자라면 글(장점·한계)이 줄어들고, 아래 시각·[초기화] 줄은 항상 보이게 */
@@ -233,4 +267,9 @@
   .group-card { gap: calc(var(--gap) * 0.35); padding-top: calc(var(--pad) * 0.55); padding-bottom: calc(var(--pad) * 0.55); }
   .group-card .sum-item dd { line-height: 1.35; }
   .card-foot .btn { min-height: 48px; }
+}
+
+/* 높은 화면(TV 1920×1080 등): 카드가 커지므로 모둠 정리를 3줄까지 */
+@media (min-width: 960px) and (orientation: landscape) and (min-height: 900px) {
+  .group-card .sum-item dd { -webkit-line-clamp: 3; }
 }
