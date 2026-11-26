@@ -34,17 +34,26 @@
 
 .next-box { margin-top: var(--gap); }
 
-/* 가로 화면(1024×768, 1366×768): 입력칸을 낮추고 저장 버튼 줄을 화면 아래에 붙인다
- * (태블릿 키보드가 올라와도 저장 버튼이 입력칸 바로 아래에 보이도록) */
-@media (orientation: landscape) and (max-height: 820px) {
-  .thought-main { padding-top: 12px; }
-  .thought-main .page-header { margin-bottom: 8px; }
-  .thought-main .page-header .btn { min-height: 52px; }
-  .thought-who { margin-bottom: 6px; }
-  .thought-title { font-size: var(--fs-lg); margin-bottom: 10px; }
-  .thought-form { padding: 18px 22px 0; }
-  .thought-form .field { margin-bottom: 12px; }
-  .thought-form .textarea { min-height: 3.6em; }
+/* 태블릿·크롬북(폭 600px 이상): 한 화면(100dvh)에 맞춘다
+ *  - 입력 폼은 남은 높이만 쓰고, 넘치면 폼 안에서만 스크롤
+ *  - 저장 버튼 줄은 폼 아래에 붙고, [모둠 친구들과 생각 모으기]는 화면 맨 아래에 항상 보임
+ *  (태블릿 키보드가 올라와 화면이 낮아져도 두 버튼이 보이도록) */
+@media (min-width: 600px) {
+  .thought-main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    padding-bottom: 14px;
+  }
+  .thought-main > * { flex: none; }
+  .thought-who { align-self: flex-start; }
+  .thought-form {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 22px 0;
+  }
   .thought-actions {
     position: sticky;
     bottom: 0;
@@ -54,9 +63,21 @@
     border-top: 2px solid var(--line);
     border-radius: 0 0 var(--radius) var(--radius);
   }
+  .next-box { margin-top: 12px; }
+}
+
+/* 가로 화면(1024×768, 1366×768): 입력칸을 낮추고 여백을 줄인다 */
+@media (orientation: landscape) and (max-height: 820px) {
+  .thought-main { padding-top: 12px; }
+  .thought-main .page-header { margin-bottom: 8px; }
+  .thought-main .page-header .btn { min-height: 52px; }
+  .thought-who { margin-bottom: 6px; }
+  .thought-title { font-size: var(--fs-lg); margin-bottom: 10px; }
+  .thought-form .field { margin-bottom: 12px; }
+  .thought-form .textarea { min-height: 3.6em; }
   .save-btn { min-height: 56px; }
-  .next-box { margin-top: 14px; }
-  .next-btn { min-height: 72px; }
+  .next-box { margin-top: 10px; }
+  .next-btn { min-height: 64px; }
 }
 .next-btn {
   --btn-edge: #174A96;
