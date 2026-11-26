@@ -225,13 +225,13 @@
  * 질문이 그래도 넘치면 질문 목록만 안에서 스크롤 (O/X 칸은 항상 보임) */
 @media (min-width: 960px) and (orientation: landscape) and (max-height: 860px) {
   .judge-head { margin-bottom: 6px; }
-  .judge-nav .nav-btn { min-height: 46px; }
+  .judge-nav .nav-btn { min-height: 48px; }
   .judge-body { gap: calc(var(--gap) * 0.8); }
   .judge-left, .judge-right { gap: 8px; }
   .case-title { font-size: var(--fs-lg); margin-bottom: 0.1em; }
   .case-situation { font-size: 1.05rem; line-height: 1.45; }
   .think { gap: 6px; }
-  .think-btn { min-height: 44px; font-size: var(--fs-sm); }
+  .think-btn { min-height: 48px; font-size: var(--fs-sm); }
   .think-list { gap: 6px; }
   .think-list li { padding: 6px 14px; font-size: 0.95rem; line-height: 1.35; }
   .vote { padding: 10px 18px; }
@@ -239,5 +239,5 @@
   .vote-rows { gap: 6px; }
   .counter { padding: 2px 8px; }
   .counter .ox, .counter .count { font-size: var(--fs-lg); }
-  .counter .step { min-height: 46px; min-width: 46px; }
+  .counter .step { min-height: 48px; min-width: 48px; }
 }

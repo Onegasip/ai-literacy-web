@@ -60,6 +60,10 @@ judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt, re
 
 ## 사용자·디자인 규칙
 - 사용자는 초등 6학년: **한국어 UI, 큰 글씨, 큰 버튼**, 태블릿 기준 반응형.
+- 디자인 콘셉트 "AI 탐구 노트": 학생 화면은 모눈 노트 바탕 + 흰 종이 카드, 장식은 **관찰 도장**(이중 테두리·살짝 기울기) 하나만. 교사 화면은 모눈·기울기 없이 대비 강하게.
+- 색·글꼴은 `css/common.css`의 토큰만 쓴다 (페이지 css에 새 색 하드코딩 금지). 의미 색 고정: 능력 `--strength`(초록) / 한계 `--limit`(주황) / AI `--ai`(보라). 주 버튼은 남색 `--primary`.
+- 6모둠은 색 + 모양 + 번호: `[data-g]`가 `--gc`(채우기), `--gc-text`(흰 바탕 글자), `--shape`(clip-path: ● ▲ ■ ◆ ★ ⬢)를 정해 준다.
+- 웹폰트는 Pretendard 1종(jsdelivr dynamic subset). 글자 대비 WCAG AA(4.5:1) 이상, 버튼 터치 영역 48px 이상, `prefers-reduced-motion` 지원.
 - 교사 페이지는 TV에 띄울 발표용 → `<html class="teacher">` + `<body class="teacher">` (html에도 있어야 rem 기준이 커짐). 글씨는 화면 높이에 맞춰 20~30px(1920×1080 ≈ 30px, 1366×768 ≈ 20px).
 - 화면 맞춤 목표: 1024×768, 1366×768, 1920×1080에서 스크롤 없이 핵심 버튼·O/X·6모둠이 보이게. 교사 결과·판단은 `.fit-screen`(100dvh) + `.fit-fill`, 학생 이야기·내 생각은 가로 화면에서 버튼 줄을 아래에 고정.
 - 그리드 칸은 `minmax(0, 1fr)`, 본문은 `overflow-wrap: anywhere` — 띄어쓰기 없는 긴 글로 가로 넘침 방지.

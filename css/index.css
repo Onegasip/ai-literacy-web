@@ -9,20 +9,27 @@
 }
 
 .hero { text-align: center; margin-bottom: 40px; }
+/* "6학년 AI 리터러시" = 관찰 도장 */
 .hero-kicker {
   display: inline-block;
-  margin-bottom: 0.6em;
-  padding: 0.25em 0.9em;
-  border-radius: 999px;
-  background: var(--ink);
-  color: #fff;
-  font-weight: 700;
+  margin-bottom: 0.8em;
+  padding: 0.12em 0.8em;
+  border: 2.5px solid var(--ink);
+  outline: 1.5px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
   font-size: var(--fs-sm);
+  transform: rotate(-2deg);
 }
 .hero-title {
   font-size: clamp(2.2rem, 7vw, 3.6rem);
   margin-bottom: 0.2em;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 .hero-sub { font-size: var(--fs-lg); color: var(--ink-soft); margin: 0; }
 .t-strength { color: var(--strength); }
@@ -43,23 +50,30 @@
   .group-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* 모둠 버튼 = 노트 색인 카드: 왼쪽 모둠 색 띠 + 모양 + 번호 (색약 학생도 모양·번호로 구분) */
 .group-btn {
-  flex-direction: column;
-  gap: 0;
+  position: relative;
+  flex-direction: row;
+  gap: 0.35em;
   min-height: 150px;
-  color: #fff;
+  padding-left: calc(1.4em + 14px);
+  border-left: 14px solid var(--gc);
+  color: var(--ink);
   font-size: var(--fs-xl);
-  background: var(--gc);
+  background: var(--surface);
 }
-.group-btn .group-num { font-size: 2.4em; font-weight: 900; line-height: 1; }
-.group-btn .group-label { font-size: 0.7em; font-weight: 700; opacity: 0.95; }
-
-.group-btn[data-g="1"] { --gc: var(--g1); }
-.group-btn[data-g="2"] { --gc: var(--g2); }
-.group-btn[data-g="3"] { --gc: var(--g3); }
-.group-btn[data-g="4"] { --gc: var(--g4); }
-.group-btn[data-g="5"] { --gc: var(--g5); }
-.group-btn[data-g="6"] { --gc: var(--g6); }
+.group-btn::before {
+  content: '';
+  flex: none;
+  width: 0.75em;
+  height: 0.75em;
+  margin-right: 0.15em;
+  background: var(--gc);
+  clip-path: var(--shape);
+}
+.group-btn .group-num { font-size: 2.2em; font-weight: 800; line-height: 1; color: var(--gc-text); font-variant-numeric: tabular-nums; }
+.group-btn .group-label { font-size: 0.7em; font-weight: 700; }
+/* 모둠 색·모양 토큰은 common.css [data-g] */
 
 /* 교사용 버튼 — 오른쪽 아래 고정, 학생이 실수로 누르지 않게 작고 차분하게 */
 .teacher-btn {
@@ -71,6 +85,7 @@
   background: var(--surface);
   color: var(--ink-soft);
   border-color: var(--line);
+  font-weight: 700;
 }
 
 .pw-input { font-size: var(--fs-lg); text-align: center; letter-spacing: 0.3em; margin-bottom: 12px; }

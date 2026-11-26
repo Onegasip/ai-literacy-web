@@ -99,7 +99,7 @@
 }
 
 .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; flex: none; }
-.card-foot .btn { min-height: 44px; font-size: max(16px, 0.7rem); padding: 0 0.9em; }
+.card-foot .btn { min-height: 48px; font-size: max(16px, 0.7rem); padding: 0 0.9em; }
 .card-time { color: var(--ink-soft); font-size: max(16px, 0.7rem); }
 
 .refresh-note { font-size: max(16px, 0.7rem); text-align: right; margin: 8px 0 0; flex: none; }
