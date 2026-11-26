@@ -1,4 +1,4 @@
-/* story.js — 이야기 보기. story.html?id=N → data/stories/storyN.json
+/* story.js — 이야기 보기. 우리 모둠이 맡은 이야기(common.js GROUP_STORY) → data/stories/storyN.json
  *  mode "scenes": 화면을 누르거나 [다음]/[이전]으로 장면 이동
  *  mode "video" : 영상 재생, 끝나면 [적으러 가기] 버튼
  */
@@ -24,22 +24,12 @@ function goWrite() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const student = requireStudent();
+  // 번호·이름을 먼저 골라야 볼 수 있다 (없으면 번호 고르기 화면으로)
+  const student = requireStudent(true);
   if (!student) return;
 
-  // id는 숫자만, 1~MEMBER_COUNT (1abc 같은 주소는 막기)
-  const raw = getParam('id') || '';
-  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
-  if (!(id >= 1 && id <= MEMBER_COUNT)) {
-    goTo('student/stories.html');
-    return;
-  }
-  // 이야기 번호 = 학생 번호. 이야기 선택 화면에서 고른(claim) 이야기만 볼 수 있다
-  if (student.member !== id) {
-    setFlash('이야기 선택 화면에서 이야기를 골라 주세요');
-    goTo('student/stories.html');
-    return;
-  }
+  // 모둠마다 맡은 이야기 하나 (주소의 ?id 는 쓰지 않는다)
+  const id = storyOf(student.group);
   if ((await checkClaim(student)) === false) {
     leaveReleased();
     return;

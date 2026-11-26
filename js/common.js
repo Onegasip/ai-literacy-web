@@ -337,12 +337,12 @@ function formatTime(ms) {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-/** class="student-badge" 요소에 "○모둠 ○번" 표시 */
+/** class="student-badge" 요소에 "○모둠 ○번 이름" 표시 */
 function renderStudentBadge() {
   const s = getStudent();
   document.querySelectorAll('.student-badge').forEach((el) => {
     if (!s.group) { el.hidden = true; return; }
-    el.textContent = s.member ? `${s.group}모둠 ${s.member}번` : `${s.group}모둠`;
+    el.textContent = s.member ? `${s.group}모둠 ${s.member}번 ${s.name || ''}`.trim() : `${s.group}모둠`;
   });
 }
 

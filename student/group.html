@@ -15,11 +15,11 @@
       <span class="student-badge"></span>
     </header>
 
-    <!-- 위쪽: 이야기 1~4별 친구 생각 (보기만) -->
-    <section aria-labelledby="membersTitle">
+    <!-- 위쪽: 1~5번 친구 생각 (보기만) -->
+    <section class="members-section" aria-labelledby="membersTitle">
       <h2 class="section-title" id="membersTitle">친구들이 찾은 AI의 장점과 한계</h2>
       <div class="member-grid" id="memberGrid" aria-live="polite">
-        <!-- js/group.js 가 1~4번 카드를 만듭니다 -->
+        <!-- js/group.js 가 1~5번 친구 카드를 만듭니다 -->
       </div>
       <p class="refresh-note muted">친구가 저장하면 바로 보여요.</p>
     </section>
@@ -29,7 +29,7 @@
       <h2 class="section-title" id="summaryTitle">우리 모둠이 찾은 AI의 장점 / 한계</h2>
       <p class="recorder-note" id="recorderNote"></p>
 
-      <form id="summaryForm" novalidate>
+      <form id="summaryForm" class="summary-form" novalidate>
         <label class="field">
           <span class="field-label strength">👍 우리 모둠이 찾은 AI의 장점</span>
           <textarea class="textarea" id="strength" maxlength="300"

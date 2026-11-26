@@ -1,28 +1,101 @@
-/* stories.js — 이야기 1~4 선택. 고른 이야기 번호 = 학생 번호
- *  같은 모둠에서 한 이야기는 한 기기만 고를 수 있다 (DB.claimMember)
- *  다른 기기가 고른 카드: "○번 친구가 골랐어요" + 비활성화
- *  내 기기가 고른 카드: [이야기 다시 보기] / [내 생각 쓰러 가기] 두 버튼
+/* stories.js — 번호·이름 고르기
+ *  위: 우리 모둠이 맡은 이야기 (common.js GROUP_STORY)
+ *  1~MEMBER_COUNT번 중 하나를 고르고 이름(성 빼고)을 적는다 → DB.claimMember (트랜잭션)
+ *  같은 모둠에서 한 번호는 한 기기만: 다른 기기가 고른 번호는 "○○ 골랐어요" + 비활성화
+ *  이미 고른 번호가 있으면 미리 골라 두고, [내 생각 쓰러 가기]도 보여 준다
  */
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   const student = requireStudent();
   if (!student) return;
   const { group } = student;
   const deviceId = getDeviceId();
+  const storyNo = storyOf(group);
 
-  const grid = document.getElementById('storyGrid');
-  grid.innerHTML = '<p class="muted center">이야기를 불러오는 중…</p>';
+  const $ = (id) => document.getElementById(id);
+  const grid = $('numberGrid');
+  const nameInput = $('nameInput');
+  const goBtn = $('goBtn');
+  const thoughtBtn = $('thoughtBtn');
 
-  const ids = Array.from({ length: MEMBER_COUNT }, (_, i) => i + 1);
-  const stories = {};   // id → story JSON (실패하면 없음)
-  let members = null;   // DB에서 받은 1~4번 상태 (null = 아직 못 받음)
-  let busy = false;     // 고르는 중에는 다른 카드 막기
+  let members = null;   // DB에서 받은 1~5번 상태 (null = 아직 못 받음)
+  let selected = null;  // 고른 번호
+  let nameTouched = false;
+  let busy = false;
 
-  /* 이야기 JSON — 하나가 실패해도 나머지는 보여준다 */
-  const results = await Promise.allSettled(ids.map((id) => loadJSON(`data/stories/story${id}.json`)));
-  results.forEach((r, i) => {
-    if (r.status === 'fulfilled') stories[ids[i]] = r.value;
-    else console.warn(`story${ids[i]}.json 읽기 실패`, r.reason);
+  /* ---------- 우리 모둠이 맡은 이야기 ---------- */
+  $('ourStoryLabel').textContent = `${group}모둠이 맡은 이야기 · 이야기 ${storyNo}`;
+  loadJSON(`data/stories/story${storyNo}.json`).then((story) => {
+    $('ourStoryTitle').textContent = story.title || `이야기 ${storyNo}`;
+    $('ourStoryIntro').textContent = story.intro || '';
+    const first = (story.scenes || []).find((sc) => sc.image)?.image || story.poster;
+    if (first) {
+      const img = new Image();
+      img.alt = '';
+      img.onerror = () => img.remove();
+      img.src = ROOT + first;
+      $('ourStoryThumb').replaceChildren(img);
+    }
+  }).catch(() => {
+    $('ourStoryTitle').textContent = `이야기 ${storyNo}`;
+    $('ourStoryIntro').textContent = '이야기 정보를 불러오지 못했어요.';
+  });
+
+  /* ---------- 이름 ---------- */
+  if (student.name) nameInput.value = student.name;
+  nameInput.addEventListener('input', () => {
+    nameTouched = true;
+    if (cleanName(nameInput.value)) { $('nameError').hidden = true; nameInput.classList.remove('is-invalid'); }
+  });
+
+  /* ---------- 번호 버튼 ---------- */
+  const mine = () => members?.find((m) => m.claimedBy === deviceId) || null;
+
+  function stateOf(n) {
+    if (!members) return 'loading';
+    const m = members.find((x) => x.member === n);
+    if (!m?.claimedBy) return 'free';
+    return m.claimedBy === deviceId ? 'mine' : 'taken';
+  }
+
+  function render() {
+    const my = mine();
+    if (my && selected === null) selected = my.member;
+    if (my && !nameTouched && my.name) nameInput.value = my.name;
+    if (selected !== null && stateOf(selected) === 'taken') selected = null; // 고르려던 번호를 친구가 먼저 고름
+
+    grid.innerHTML = '';
+    for (let n = 1; n <= MEMBER_COUNT; n++) {
+      const st = stateOf(n);
+      const m = members?.find((x) => x.member === n);
+      const label = {
+        loading: '확인 중…',
+        free: n === 1 ? '기록 담당' : '비어 있어요',
+        mine: '✔ 내 번호',
+        taken: `🔒 ${m?.name || '친구'}`,
+      }[st];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `num-btn is-${st}` + (selected === n ? ' is-selected' : '');
+      btn.dataset.m = n;
+      btn.setAttribute('aria-pressed', String(selected === n));
+      btn.setAttribute('aria-label', `${n}번 — ${st === 'taken' ? (m?.name || '친구') + '이(가) 골랐어요' : label}`);
+      btn.disabled = st === 'taken' || st === 'loading' || busy;
+      btn.innerHTML = `<span class="num">${n}</span><span class="num-state">${escapeHtml(label)}</span>`;
+      grid.appendChild(btn);
+    }
+    thoughtBtn.hidden = !my;
+    goBtn.textContent = my && selected === my.member ? '📖 이야기 다시 보기' : '📖 이야기 읽으러 가기';
+    goBtn.disabled = busy;
+  }
+
+  grid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.num-btn');
+    if (!btn || btn.disabled) return;
+    selected = Number(btn.dataset.m);
+    $('numberError').hidden = true;
+    render();
+    if (!cleanName(nameInput.value)) nameInput.focus();
   });
 
   /* 모둠 선택 상태 실시간 */
@@ -32,90 +105,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   render();
 
-  function stateOf(id) {
-    if (!members) return 'loading';
-    const m = members.find((x) => x.member === id);
-    if (!m?.claimedBy) return 'free';
-    return m.claimedBy === deviceId ? 'mine' : 'taken';
-  }
-
-  function render() {
-    grid.innerHTML = '';
-    ids.forEach((id) => grid.appendChild(makeCard(id)));
-  }
-
-  function makeCard(id) {
-    const story = stories[id];
-    const state = stateOf(id);
-    if (state === 'mine') return makeMineCard(id, story);
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = `story-card is-${state}` + (story ? '' : ' is-error');
-
-    const title = story ? story.title : `이야기 ${id}`;
-    const intro = story ? story.intro : '이야기를 불러오지 못했어요.';
-    const tag = {
-      taken: `<span class="story-tag tag-taken">🔒 ${id}번 친구가 골랐어요</span>`,
-      loading: '<span class="story-tag tag-loading">확인 중…</span>',
-      free: '',
-    }[state];
-
-    card.innerHTML = `
-      <span class="story-num">${id}</span>
-      <span class="story-body">
-        <span class="story-name">${escapeHtml(title)}</span>
-        <span class="story-intro">${escapeHtml(intro)}</span>
-        ${tag}
-      </span>`;
-
-    card.disabled = !story || state === 'taken' || state === 'loading' || busy;
-    card.addEventListener('click', () => pick(id));
-    return card;
-  }
-
-  /* 내가 고른 카드: 카드 안에 버튼 두 개 (버튼 안에 버튼을 넣을 수 없어 div로 만든다) */
-  function makeMineCard(id, story) {
-    const card = document.createElement('div');
-    card.className = 'story-card is-mine' + (story ? '' : ' is-error');
-    const title = story ? story.title : `이야기 ${id}`;
-    const intro = story ? story.intro : '이야기를 불러오지 못했어요.';
-    card.innerHTML = `
-      <span class="story-num">${id}</span>
-      <span class="story-body">
-        <span class="story-name">${escapeHtml(title)}</span>
-        <span class="story-intro">${escapeHtml(intro)}</span>
-        <span class="story-tag tag-mine">✔ 내가 고른 이야기</span>
-        <span class="mine-actions">
-          <button type="button" class="btn btn-ghost mine-btn" data-go="story">📖 이야기 다시 보기</button>
-          <button type="button" class="btn btn-primary mine-btn" data-go="thought">✏️ 내 생각 쓰러 가기</button>
-        </span>
-      </span>`;
-    card.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-go]');
-      if (!btn || busy) return;
-      setStudent({ member: id });
-      goTo(btn.dataset.go === 'story' ? `student/story.html?id=${id}` : 'student/my-thought.html');
-    });
-    return card;
-  }
-
-  async function pick(id) {
+  /* ---------- 고르기 → 이야기 / 내 생각 ---------- */
+  async function claimThen(next) {
     if (busy) return;
+    const name = cleanName(nameInput.value);
+    let bad = false;
+    if (selected === null) { $('numberError').hidden = false; bad = true; }
+    if (!name) {
+      $('nameError').hidden = false;
+      nameInput.classList.add('is-invalid');
+      if (selected !== null) nameInput.focus();
+      bad = true;
+    }
+    if (bad) { showToast(selected === null ? '번호를 골라 주세요' : '이름을 적어 주세요'); return; }
+
     busy = true;
     render();
     try {
-      const res = await DB.claimMember(group, id, deviceId);
+      const res = await DB.claimMember(group, selected, deviceId, name);
       if (res.ok) {
-        setStudent({ member: id });
-        goTo(`student/story.html?id=${id}`);
+        setStudent({ member: selected, name });
+        goTo(next);
         return;
       }
       if (res.reason === 'taken') {
-        showToast(`${id}번 이야기는 다른 친구가 먼저 골랐어요`, 3000);
+        showToast(`${selected}번은 다른 친구가 먼저 골랐어요`, 3000);
+        selected = null;
       } else if (res.reason === 'locked') {
+        selected = res.member;
         setStudent({ member: res.member });
         await confirmDialog(
-          `이미 이야기 ${res.member}을(를) 골라서 글을 썼어요.\n다른 이야기로 바꾸려면 선생님께 [선택 풀기]를 부탁하세요.`,
+          `이미 ${res.member}번으로 글을 썼어요.\n번호를 바꾸려면 선생님께 [선택 풀기]를 부탁하세요.`,
           { okText: '알겠어요', cancelText: '닫기' }
         );
       }
@@ -126,4 +146,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     busy = false;
     render();
   }
+
+  $('pickForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    claimThen('student/story.html');
+  });
+  thoughtBtn.addEventListener('click', () => {
+    const my = mine();
+    if (my) selected = my.member;
+    claimThen('student/my-thought.html');
+  });
 });

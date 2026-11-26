@@ -4,23 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:,">
-  <title>이야기 고르기</title>
+  <title>번호와 이름</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/stories.css">
 </head>
 <body>
-  <main class="container">
+  <main class="container pick-main">
     <header class="page-header">
       <a class="btn btn-ghost" href="../index.html">← 모둠 다시 고르기</a>
       <span class="student-badge"></span>
     </header>
 
-    <h1 class="stories-title">읽을 이야기를 골라요</h1>
-    <p class="stories-guide">내가 고른 이야기 번호가 <b>나의 번호</b>가 돼요.</p>
+    <!-- 우리 모둠이 맡은 이야기 (js/stories.js 가 data/stories/storyN.json 을 읽어 채움) -->
+    <section class="our-story" id="ourStory" aria-labelledby="ourStoryTitle">
+      <div class="our-story-thumb" id="ourStoryThumb"></div>
+      <div class="our-story-text">
+        <p class="our-story-label" id="ourStoryLabel">우리 모둠이 맡은 이야기</p>
+        <h2 class="our-story-title" id="ourStoryTitle">이야기를 불러오는 중…</h2>
+        <p class="our-story-intro" id="ourStoryIntro"></p>
+      </div>
+    </section>
 
-    <div class="story-grid" id="storyGrid" aria-live="polite">
-      <!-- js/stories.js 가 data/stories/story1~4.json 을 읽어 카드를 만듭니다 -->
-    </div>
+    <form class="card pick-form" id="pickForm" novalidate>
+      <fieldset class="pick-numbers">
+        <legend class="pick-title">① 내 번호를 골라요</legend>
+        <div class="number-grid" id="numberGrid" aria-live="polite">
+          <!-- js/stories.js 가 1~5번 버튼을 만듭니다 -->
+        </div>
+        <p class="pick-error" id="numberError" hidden>번호를 골라 주세요.</p>
+      </fieldset>
+
+      <label class="pick-name">
+        <span class="pick-title">② 내 이름을 적어요 <small>(성 빼고 이름만)</small></span>
+        <input class="input name-input" id="nameInput" type="text" maxlength="10" autocomplete="off"
+          placeholder="예) 서연" aria-describedby="nameError">
+        <span class="pick-error" id="nameError" hidden>이름을 1~10자로 적어 주세요.</span>
+      </label>
+
+      <div class="pick-actions">
+        <button type="button" class="btn btn-ghost pick-thought" id="thoughtBtn" hidden>✏️ 내 생각 쓰러 가기</button>
+        <button type="submit" class="btn btn-primary pick-go" id="goBtn">📖 이야기 읽으러 가기</button>
+      </div>
+    </form>
   </main>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

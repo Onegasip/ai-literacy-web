@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const nextBox = document.getElementById('nextBox');
   let dirty = false;
 
-  document.getElementById('backBtn').href = `story.html?id=${member}`;
+  const storyNo = storyOf(group);
+  document.getElementById('backBtn').href = 'story.html';
 
   const current = () => ({
     strength: fields.strength.value.trim(),
@@ -140,9 +141,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* ---------- 위쪽 "○모둠 ○번 · 이야기 N 제목" ---------- */
   const who = document.getElementById('who');
-  who.textContent = `${group}모둠 ${member}번 · 이야기 ${member}`;
-  loadJSON(`data/stories/story${member}.json`)
-    .then((story) => { if (story.title) who.textContent = `${group}모둠 ${member}번 · 이야기 ${member} ${story.title}`; })
+  let myName = student.name || '';
+  let storyTitle = '';
+  const showWho = () => {
+    who.textContent = `${group}모둠 ${member}번 ${myName}`.trim() + ` · 이야기 ${storyNo}${storyTitle ? ' ' + storyTitle : ''}`;
+  };
+  showWho();
+  loadJSON(`data/stories/story${storyNo}.json`)
+    .then((story) => { storyTitle = story.title || ''; showWho(); })
     .catch(() => {});
 
   /* ---------- 저장된 내용 불러오기 (실패해도 쓰던 글은 그대로) ---------- */
@@ -160,6 +166,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     dirty = false;
     leaveReleased();
     return;
+  }
+
+  // DB의 이름으로 다시 표시 (다른 기기에서 고친 이름도 반영)
+  if (saved.name && saved.name !== myName) {
+    myName = saved.name;
+    setStudent({ name: myName });
+    showWho();
+    renderStudentBadge();
   }
 
   // 불러오는 동안 이미 쓰기 시작했으면 덮어쓰지 않는다

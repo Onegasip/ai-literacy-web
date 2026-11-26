@@ -1,5 +1,5 @@
 /* group.js — 모둠 생각 모으기
- *  위: 1~4번 친구 생각(보기만)  아래: 모둠 공동 정리(1번 기록 담당만 입력)
+ *  위: 1~5번 친구 카드(이름 + 장점·한계, 보기만)  아래: 모둠 공동 정리(1번 기록 담당만 입력)
  *  데이터는 DB.watchGroup 으로만 읽는다 (Firebase 실시간으로 교체 가능)
  */
 
@@ -13,6 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const isRecorder = member === RECORDER;
 
   document.getElementById('groupTitle').textContent = `${group}모둠 생각 모으기`;
+  const storyNo = storyOf(group);
+  const membersTitle = document.getElementById('membersTitle');
+  loadJSON(`data/stories/story${storyNo}.json`)
+    .then((story) => {
+      if (story.title) membersTitle.textContent = `「${story.title}」에서 친구들이 찾은 AI의 장점과 한계`;
+    })
+    .catch(() => {});
 
   const grid = document.getElementById('memberGrid');
   const fields = {
@@ -27,16 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveBtn = document.getElementById('saveBtn');
   const counters = Object.values(fields).map(attachCharCounter); // "120 / 300"
   let dirty = false;
-  let lastMembers = null;
-
-  /* 이야기 제목 (카드 머리에 표시, 실패하면 "이야기 N") */
-  const titles = {};
-  Promise.allSettled(
-    Array.from({ length: MEMBER_COUNT }, (_, i) => loadJSON(`data/stories/story${i + 1}.json`))
-  ).then((results) => {
-    results.forEach((r, i) => { if (r.status === 'fulfilled') titles[i + 1] = r.value.title; });
-    if (lastMembers) renderMembers(lastMembers);
-  });
 
   /* ---------- 기록 담당 / 보기 전용 ---------- */
   const note = document.getElementById('recorderNote');
@@ -64,28 +61,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ---------- 친구 카드 ---------- */
+  /* ---------- 친구 카드 (1~5번) ---------- */
   function renderMembers(members) {
-    lastMembers = members;
     grid.innerHTML = members.map((m) => {
       const me = m.member === member;
       const done = m.strength || m.limit;
-      const title = titles[m.member] ? `이야기 ${m.member} ${titles[m.member]}` : `이야기 ${m.member}`;
+      const name = m.name ? escapeHtml(m.name) : '<span class="member-noname">빈 번호</span>';
       return `
-        <article class="member-card${me ? ' is-me' : ''}">
+        <article class="member-card${me ? ' is-me' : ''}${m.claimedBy ? '' : ' is-empty'}">
           <div class="member-head">
             <span class="member-num">${m.member}</span>
-            <span class="member-story">${escapeHtml(title)}</span>
+            <span class="member-name">${name}</span>
+            ${m.member === RECORDER ? '<span class="recorder-tag" title="모둠 정리를 쓰는 기록 담당">기록</span>' : ''}
             ${me ? '<span class="me-tag">나</span>' : ''}
           </div>
-          ${done ? `
-            <dl class="member-item"><dt class="strength">👍 장점</dt><dd>${escapeHtml(m.strength || '-')}</dd></dl>
-            <dl class="member-item"><dt class="limit">🤔 한계</dt><dd>${escapeHtml(m.limit || '-')}</dd></dl>
-          ` : `<p class="member-empty">${m.claimedBy ? '아직 작성 중이에요' : '아직 이 이야기를 고른 친구가 없어요'}</p>`}
-          <div class="member-foot">
-            <span class="member-time">${done ? formatTime(m.updatedAt) : ''}</span>
-            ${me ? '<button type="button" class="btn btn-ghost edit-btn" data-act="edit">내 생각 고치기</button>' : ''}
+          <div class="member-body">
+            ${done ? `
+              <dl class="member-item"><dt class="strength">👍 장점</dt><dd>${escapeHtml(m.strength || '-')}</dd></dl>
+              <dl class="member-item"><dt class="limit">🤔 한계</dt><dd>${escapeHtml(m.limit || '-')}</dd></dl>
+            ` : `<p class="member-empty">${m.claimedBy ? '아직 쓰는 중이에요' : '아직 이 번호를 고른 친구가 없어요'}</p>`}
           </div>
+          ${me ? `<div class="member-foot">
+            <span class="member-time">${done ? formatTime(m.updatedAt) : ''}</span>
+            <button type="button" class="btn btn-ghost edit-btn" data-act="edit">내 생각 고치기</button>
+          </div>` : (done ? `<div class="member-foot"><span class="member-time">${formatTime(m.updatedAt)}</span></div>` : '')}
         </article>`;
     }).join('');
   }
