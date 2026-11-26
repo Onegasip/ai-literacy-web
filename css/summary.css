@@ -1,16 +1,16 @@
 /* teacher/summary.html — AI 능력과 한계 정리 (클릭해서 하나씩 공개) */
 
-.summary-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: var(--gap);
+/* 제목·모두 보기 버튼은 교사 메뉴 줄 안에 (세로 공간 아끼기) */
+.teacher-nav { flex-wrap: wrap; }
+.summary-title {
+  margin: 0 0 0 0.6em;
+  font-size: var(--fs-lg);
+  line-height: 1.2;
 }
-.summary-title { margin: 0; font-size: var(--fs-xl); }
-.summary-tools { display: flex; gap: 12px; }
-.summary-tools .btn { font-size: var(--fs-sm); }
+/* 좁은 화면에서는 메뉴가 두 줄이 되지 않게 제목을 숨김 (탭 '정리'가 이미 표시) */
+@media (max-width: 1180px) {
+  .summary-title { display: none; }
+}
 
 .error-text { color: var(--danger); font-weight: 700; }
 
@@ -28,8 +28,8 @@
 .col-limit   { --col: var(--limit);    --col-soft: #fbefe2; }
 
 .col-title {
-  margin-bottom: 16px;
-  padding: 0.35em 0.8em;
+  margin-bottom: 10px;
+  padding: 0.25em 0.8em;
   border-radius: var(--radius-sm);
   background: var(--col);
   color: #fff;
@@ -37,14 +37,14 @@
 }
 .col-title small { font-weight: 500; font-size: 0.75em; opacity: 0.9; }
 
-.reveal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.reveal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 
 /* ---------- 가려진 카드 ---------- */
 .reveal {
   position: relative;
   display: block;
   width: 100%;
-  min-height: 4.4em;
+  min-height: 3.6em;
   padding: 0;
   border: 0;
   border-radius: var(--radius);
@@ -91,16 +91,18 @@
 /* 내용: 공개되는 면 */
 .reveal-content {
   display: block;
-  padding: 18px 28px;
+  padding: 10px 24px;
   background: var(--surface);
   border-left: 10px solid var(--col);
   box-shadow: var(--shadow);
   opacity: 0;
   transform: scale(0.97);
 }
-.reveal-keyword { display: block; font-size: var(--fs-lg); font-weight: 900; color: var(--col); line-height: 1.3; }
-.reveal-desc { display: block; margin-top: 4px; }
-.reveal-stories { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+/* 키워드 줄: 키워드 + 이야기 번호 칩 (칩을 같은 줄에 두어 높이 아끼기) */
+.reveal-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.reveal-keyword { font-size: 1.12rem; font-weight: 900; color: var(--col); line-height: 1.3; }
+.reveal-desc { display: block; margin-top: 2px; font-size: var(--fs-sm); line-height: 1.45; }
+.reveal-stories { display: inline-flex; gap: 6px; flex-wrap: wrap; }
 .story-chip {
   padding: 0.05em 0.7em;
   border-radius: 999px;
@@ -114,17 +116,28 @@
 .reveal.is-open .reveal-content { opacity: 1; transform: none; }
 
 /* ---------- 핵심 문장 ---------- */
-.conclusion-wrap { margin-top: calc(var(--gap) * 1.6); }
-.conclusion { --col: var(--ink); min-height: 5em; }
+.conclusion-wrap { margin-top: var(--gap); }
+.conclusion { --col: var(--ink); min-height: 3.6em; }
 .conclusion .reveal-cover { justify-content: center; background-color: var(--ink); }
 .conclusion .reveal-content {
   border-left: 0;
-  border-top: 10px solid var(--accent);
-  padding: 26px 32px;
+  border-top: 8px solid var(--accent);
+  padding: 14px 28px;
   text-align: center;
-  font-size: var(--fs-lg);
+  font-size: 1.1rem;
   font-weight: 900;
-  line-height: 1.5;
+  line-height: 1.45;
+}
+
+/* ---------- 한 화면 맞춤 (넓은 가로 화면) ----------
+   능력/한계 칸 개수가 달라도 각 칸이 남은 높이를 나눠 채운다. */
+@media (min-width: 960px) and (orientation: landscape) {
+  .summary-cols { overflow-y: auto; }   /* 혹시 넘치면 겹치지 않고 이 안에서만 스크롤 */
+  .summary-col { display: flex; flex-direction: column; min-height: 0; }
+  .reveal-list { flex: 1; min-height: 0; grid-auto-rows: minmax(min-content, 1fr); }
+  .reveal-list > li { display: flex; }
+  .reveal-list .reveal { flex: 1; }
+  .reveal-list .reveal-content { height: 100%; display: flex; flex-direction: column; justify-content: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

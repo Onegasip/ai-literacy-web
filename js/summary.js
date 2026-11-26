@@ -54,9 +54,11 @@ function itemHtml(item, i) {
           <span class="cover-hint">눌러서 확인</span>
         </span>
         <span class="reveal-content">
-          <span class="reveal-keyword">${escapeHtml(item.keyword)}</span>
+          <span class="reveal-head">
+            <span class="reveal-keyword">${escapeHtml(item.keyword)}</span>
+            ${stories ? `<span class="reveal-stories">${stories}</span>` : ''}
+          </span>
           ${item.desc ? `<span class="reveal-desc">${escapeHtml(item.desc)}</span>` : ''}
-          ${stories ? `<span class="reveal-stories">${stories}</span>` : ''}
         </span>
       </button>
     </li>`;
