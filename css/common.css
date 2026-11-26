@@ -309,15 +309,19 @@ p { margin: 0 0 1em; }
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 32px;
+  top: 12px;              /* 실제 위치는 js/common.js placeToast()가 버튼을 피해 정한다 */
   z-index: 200;
-  transform: translate(-50%, 20px);
-  max-width: calc(100% - 32px);
-  padding: 0.7em 1.4em;
-  border-radius: 999px;
+  transform: translate(-50%, -8px);
+  width: max-content;
+  max-width: min(960px, calc(100% - 32px));
+  padding: 0.6em 1.2em;
+  border-radius: var(--radius-sm);
   background: var(--ink);
   color: #fff;
   font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(18, 29, 58, 0.25);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s, transform 0.2s;

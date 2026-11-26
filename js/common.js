@@ -180,7 +180,7 @@ function goTo(path) {
   location.href = ROOT + path;
 }
 
-/** 화면 아래 잠깐 뜨는 알림 */
+/** 잠깐 뜨는 알림. 버튼·입력칸을 가리지 않는 자리에 띄운다 (placeToast) */
 function showToast(msg, ms = 2000) {
   let el = document.querySelector('.toast');
   if (!el) {
@@ -190,9 +190,49 @@ function showToast(msg, ms = 2000) {
     document.body.appendChild(el);
   }
   el.textContent = msg;
+  placeToast(el);
   el.classList.add('show');
   clearTimeout(el._timer);
   el._timer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+/* 알림 자리 고르기: 화면 위쪽부터 아래로 내려가며 버튼·링크·입력칸(+끊김 안내)과
+ * 겹치지 않는 첫 자리. 빈자리가 없으면 가장 적게 겹치는 자리(같으면 위쪽). */
+function placeToast(el) {
+  el.style.top = '0px';
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const left = (vw - w) / 2;
+  const right = left + w;
+  const pad = 6; // 버튼과 띄울 거리
+  const boxes = [...document.querySelectorAll(
+    'button, a[href], textarea, input, select, [role="button"], .net-banner'
+  )]
+    .filter((e) => !el.contains(e) && !e.closest('[hidden]'))
+    .map((e) => {
+      const r = e.getBoundingClientRect();
+      // 모둠 카드처럼 큰 누름 영역은 본문을 잠깐 가려도 되므로 가볍게 센다 (그 안의 작은 버튼은 그대로 피함)
+      r.weight = r.height > h * 2.5 ? 0.05 : 1;
+      return r;
+    })
+    .filter((r) => r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < vh && r.right > left && r.left < right);
+
+  const margin = 12;
+  let best = margin;
+  let bestArea = Infinity;
+  for (let y = margin; y <= Math.max(margin, vh - h - margin); y += 6) {
+    let area = 0;
+    for (const r of boxes) {
+      const ox = Math.min(right, r.right + pad) - Math.max(left, r.left - pad);
+      const oy = Math.min(y + h, r.bottom + pad) - Math.max(y, r.top - pad);
+      if (ox > 0 && oy > 0) area += ox * oy * r.weight;
+    }
+    if (area < bestArea) { bestArea = area; best = y; }
+    if (area === 0) break;
+  }
+  el.style.top = `${best}px`;
 }
 
 /** 큰 버튼 확인창 → Promise<boolean> */
