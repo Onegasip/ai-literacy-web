@@ -3,8 +3,25 @@
  * 불러오는 순서: db.js → common.js → 페이지 js
  * ========================================================= */
 
-const GROUP_COUNT = 6;
-const MEMBER_COUNT = 4;
+/* ---------- 수업 구조 설정 (여기 한 곳만 바꾸면 된다) ----------
+ * 모둠 수, 모둠당 인원(번호 1~MEMBER_COUNT), 모둠이 맡은 이야기 번호(data/stories/storyN.json)
+ * ※ js/db.js · js/db.local.js 의 GROUPS / MEMBERS 와 firestore.rules 의 isGroup / isMember 도 같게 맞춘다 */
+const GROUP_COUNT = 4;
+const MEMBER_COUNT = 5;
+const GROUP_STORY = { 1: 1, 2: 2, 3: 3, 4: 4 };
+
+/** 모둠이 맡은 이야기 번호 */
+function storyOf(group) {
+  return GROUP_STORY[group] || 1;
+}
+
+/* 학생 이름: 성 빼고 이름만, 앞뒤 공백 제거, 1~NAME_MAX자 (firestore.rules 와 같게) */
+const NAME_MAX = 10;
+/** 이름 다듬기 → 올바르면 다듬은 이름, 아니면 '' */
+function cleanName(raw) {
+  const name = String(raw ?? '').trim().replace(/\s+/g, ' ');
+  return name.length >= 1 && name.length <= NAME_MAX ? name : '';
+}
 
 /* 우리 반 인원 — 판단 O/X 입력에서 처음/최종 각각 O+X가 이 수를 넘지 않게 */
 const CLASS_SIZE = 20;
@@ -17,7 +34,7 @@ const ROOT = /\/(student|teacher)\/[^/]*$/.test(location.pathname) ? '../' : '';
 
 /* ---------- 기기 설정 (localStorage) ----------
  * DB 데이터는 db.js에만. 여기서는 이 기기의 설정(학생 정보, 기기 ID)만 localStorage에 둔다.
- * 개인정보 없음: 모둠 번호 + 학생 번호 + 무작위 기기 ID */
+ * 모둠 번호 + 학생 번호 + 이름(성 빼고, 화면 표시용 복사본) + 무작위 기기 ID */
 const STUDENT_KEY = 'ailit-student';
 const DEVICE_KEY = 'ailit-device';
 
@@ -39,14 +56,14 @@ function getDeviceId() {
   return id;
 }
 
-/** 모둠·번호 저장. 일부만 넘기면 기존 값과 합친다. 예) setStudent({group: 3}) */
+/** 모둠·번호·이름 저장. 일부만 넘기면 기존 값과 합친다. 예) setStudent({group: 3}) */
 function setStudent(info) {
   const next = { ...getStudent(), ...info };
   writeLocal(STUDENT_KEY, next);
   return next;
 }
 
-/** → {group, member} (없으면 빈 객체) */
+/** → {group, member, name} (없으면 빈 객체) */
 function getStudent() {
   return readLocal(STUDENT_KEY) || {};
 }
@@ -55,13 +72,13 @@ function getStudent() {
  *  모둠이 없으면 첫 화면, needMember=true인데 번호가 없으면 이야기 선택 화면 */
 function requireStudent(needMember = false) {
   const s = getStudent();
-  if (!s.group) {
+  if (!(s.group >= 1 && s.group <= GROUP_COUNT)) {   // 모둠 수가 바뀌어 없는 모둠이면 다시 고르기
     setFlash('모둠을 먼저 골라 주세요');
     location.href = ROOT + 'index.html';
     return null;
   }
-  if (needMember && !s.member) {
-    setFlash('이야기를 먼저 골라 주세요');
+  if (needMember && !(s.member >= 1 && s.member <= MEMBER_COUNT)) {
+    setFlash('번호를 먼저 골라 주세요');
     location.href = ROOT + 'student/stories.html';
     return null;
   }
@@ -86,7 +103,7 @@ function leaveReleased() {
   if (leaving) return;
   leaving = true;
   setStudent({ member: null });
-  setFlash('이야기 선택이 풀렸어요. 이야기를 다시 골라 주세요.');
+  setFlash('번호 선택이 풀렸어요. 번호를 다시 골라 주세요.');
   location.href = ROOT + 'student/stories.html';
 }
 

@@ -6,9 +6,10 @@
  *   모든 함수는 async(Promise)라서 호출하는 쪽 코드는 그대로 둔다.
  *
  * 데이터 구조 (Firestore 경로와 같음)
- *   groups/{1~6}                 { strength, limit, updatedAt }  모둠 정리
- *   groups/{1~6}/members/{1~4}   { strength, limit, updatedAt, claimedBy, claimedAt }  개인 생각
+ *   groups/{1~4}                 { strength, limit, updatedAt }  모둠 정리
+ *   groups/{1~4}/members/{1~5}   { name, strength, limit, updatedAt, claimedBy, claimedAt }  개인 생각
  *   judge/{사례id}                { firstO, firstX, finalO, finalX, updatedAt, rev }  O/X 인원
+ *   board/summary                { abilities, limits, conclusion, updatedAt, rev }  정리 판서
  *
  *   db.js와 같은 함수·같은 결과. 보안 규칙이 하는 검사(선택이 풀린 번호에 저장 거절)도 흉내 낸다.
  *
@@ -18,8 +19,9 @@
 
 const DB = (() => {
   const PREFIX = 'ailit:';
-  const GROUPS = 6;
-  const MEMBERS = 4;
+  const GROUPS = 4;       // common.js GROUP_COUNT 와 같게
+  const MEMBERS = 5;      // common.js MEMBER_COUNT 와 같게
+  const MAX_NAME = 10;
 
   const groupPath = (g) => `groups/${g}`;
   const memberPath = (g, m) => `groups/${g}/members/${m}`;
@@ -47,8 +49,9 @@ const DB = (() => {
 
   const hasContent = (d) => Boolean(d && (d.strength || d.limit));
 
-  /** 이야기(번호) 고르기 — db.js claimMember와 같은 결과 형식 */
-  async function claimMember(group, member, deviceId) {
+  /** 번호 고르기 + 이름 — db.js claimMember와 같은 결과 형식 */
+  async function claimMember(group, member, deviceId, name) {
+    const cleanName = String(name ?? '').trim().slice(0, MAX_NAME);
     const docs = {};
     for (let m = 1; m <= MEMBERS; m++) docs[m] = readDoc(memberPath(group, m));
     const target = docs[member];
@@ -59,7 +62,9 @@ const DB = (() => {
     mine.forEach((m) => deleteDoc(memberPath(group, m)));
     if (target?.claimedBy !== deviceId) {
       localStorage.setItem(PREFIX + memberPath(group, member),
-        JSON.stringify({ ...(target || {}), claimedBy: deviceId, claimedAt: Date.now() }));
+        JSON.stringify({ ...(target || {}), claimedBy: deviceId, claimedAt: Date.now(), name: cleanName }));
+    } else if (target.name !== cleanName) {
+      localStorage.setItem(PREFIX + memberPath(group, member), JSON.stringify({ ...target, name: cleanName }));
     }
     return { ok: true };
   }
@@ -183,7 +188,109 @@ const DB = (() => {
     return result;
   }
 
-  /** 모둠 데이터(정리 + 1~4번) 지켜보기. 바뀔 때마다 callback({summary, members}) 호출.
+  /* ---------- 정리 판서 (board/summary) ---------- */
+  // 판서 계산 규칙은 db.local.js 와 같다. 칸·글자 수 제한은 firestore.rules 와 같게.
+  const BOARD_COLS = ['abilities', 'limits'];
+  const BOARD_MAX_ITEMS = 10;
+  const BOARD_KEYWORD = 30;
+  const BOARD_DESC = 80;
+  const BOARD_CONCLUSION = 150;
+
+  const normBoard = (d) => ({
+    abilities: Array.isArray(d?.abilities) ? d.abilities : [],
+    limits: Array.isArray(d?.limits) ? d.limits : [],
+    conclusion: typeof d?.conclusion === 'string' ? d.conclusion : '',
+    updatedAt: Number(d?.updatedAt) || 0,
+    rev: Math.max(0, Math.floor(Number(d?.rev) || 0)),
+  });
+  const boardError = (code, msg) => { const e = new Error(msg); e.code = code; return e; };
+  function cleanItem(item, id) {
+    const keyword = String(item?.keyword ?? '').trim().slice(0, BOARD_KEYWORD);
+    if (!keyword) throw boardError('empty', '키워드를 적어 주세요');
+    const groups = [...new Set((item?.groups || []).map(Number))]
+      .filter((g) => Number.isInteger(g) && g >= 1 && g <= GROUPS).sort((a, b) => a - b);
+    return { id, keyword, desc: String(item?.desc ?? '').trim().slice(0, BOARD_DESC), groups };
+  }
+  const newItemId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function findItem(b, id) {
+    for (const col of BOARD_COLS) {
+      const i = b[col].findIndex((x) => x.id === id);
+      if (i >= 0) return { col, i };
+    }
+    return null;
+  }
+  /** 판서 한 번 바꾸기. op:
+   *   {type:'add', col, item}            col = 'abilities' | 'limits', item = {keyword, desc, groups}
+   *   {type:'update', id, col, item}     내용 고치기 (col이 다르면 다른 칸으로 옮김)
+   *   {type:'remove', id}
+   *   {type:'move', id, dir}             dir = -1(위로) | 1(아래로)
+   *   {type:'conclusion', text}          오늘의 핵심 문장
+   *  → 바뀐 판서 (바꿀 게 없으면 null). 칸이 꽉 차면 err.code 'full', 키워드가 없으면 'empty' */
+  function applyBoardOp(cur, op) {
+    const b = { ...cur, abilities: cur.abilities.slice(), limits: cur.limits.slice() };
+    if (op.type === 'conclusion') {
+      const text = String(op.text ?? '').trim().slice(0, BOARD_CONCLUSION);
+      if (text === b.conclusion) return null;
+      b.conclusion = text;
+      return b;
+    }
+    if (op.type === 'add') {
+      if (!BOARD_COLS.includes(op.col)) throw boardError('bad', '알 수 없는 칸');
+      if (b[op.col].length >= BOARD_MAX_ITEMS) throw boardError('full', `한 칸에 ${BOARD_MAX_ITEMS}개까지 적을 수 있어요`);
+      b[op.col].push(cleanItem(op.item, newItemId()));
+      return b;
+    }
+    const at = findItem(b, op.id);
+    if (!at) return null; // 다른 화면에서 이미 지움
+    if (op.type === 'remove') {
+      b[at.col].splice(at.i, 1);
+      return b;
+    }
+    if (op.type === 'move') {
+      const j = at.i + (op.dir < 0 ? -1 : 1);
+      if (j < 0 || j >= b[at.col].length) return null;
+      [b[at.col][at.i], b[at.col][j]] = [b[at.col][j], b[at.col][at.i]];
+      return b;
+    }
+    if (op.type === 'update') {
+      const item = cleanItem(op.item, op.id);
+      const col = BOARD_COLS.includes(op.col) ? op.col : at.col;
+      if (col === at.col) {
+        b[col][at.i] = item;
+      } else {
+        if (b[col].length >= BOARD_MAX_ITEMS) throw boardError('full', `한 칸에 ${BOARD_MAX_ITEMS}개까지 적을 수 있어요`);
+        b[at.col].splice(at.i, 1);
+        b[col].push(item);
+      }
+      return b;
+    }
+    throw boardError('bad', '알 수 없는 바꾸기');
+  }
+
+  const boardPath = 'board/summary';
+
+  /** 정리 판서 읽기 → {abilities, limits, conclusion, updatedAt, rev} */
+  async function getBoard() {
+    return normBoard(readDoc(boardPath));
+  }
+
+  /** 정리 판서 바꾸기 — db.js changeBoard 와 같은 규칙 */
+  async function changeBoard(op) {
+    const cur = normBoard(readDoc(boardPath));
+    const next = applyBoardOp(cur, op);
+    if (!next) return cur;
+    next.updatedAt = Date.now();
+    next.rev = cur.rev + 1;
+    localStorage.setItem(PREFIX + boardPath, JSON.stringify(next));
+    return next;
+  }
+
+  /** 정리 판서 지켜보기 — 1초마다 + 다른 탭 변경 */
+  function watchBoard(callback, intervalMs = 1000) {
+    return poll(async () => normBoard(readDoc(boardPath)), callback, intervalMs);
+  }
+
+  /** 모둠 데이터(정리 + 1~번호) 지켜보기. 바뀔 때마다 callback({summary, members}) 호출.
    *  지금: 5초마다 다시 읽기 + 같은 기기 다른 탭 변경(storage 이벤트)
    *  Firebase: onSnapshot 실시간 구독으로 바꾸면 된다.
    *  반환값: 지켜보기를 멈추는 함수 */
@@ -241,5 +348,8 @@ const DB = (() => {
     changeJudge,
     watchJudge,
     getAllJudges,
+    getBoard,
+    changeBoard,
+    watchBoard,
   };
 })();

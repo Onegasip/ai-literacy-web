@@ -8,11 +8,14 @@
  *   firebase-app-compat.js → firebase-firestore-compat.js → db.js → common.js → 페이지 js
  *
  * 데이터 구조 (Firestore)
- *   groups/{1~6}                 { strength, limit, updatedAt }  모둠 정리
- *   groups/{1~6}/members/{1~4}   { strength, limit, updatedAt, claimedBy, claimedAt }  개인 생각
- *                                 claimedBy = 이 이야기(번호)를 고른 기기 ID, claimedAt = 고른 시각
+ *   groups/{1~4}                 { strength, limit, updatedAt }  모둠 정리
+ *   groups/{1~4}/members/{1~5}   { name, strength, limit, updatedAt, claimedBy, claimedAt }  개인 생각
+ *                                 name = 학생 이름(성 빼고, 10자까지)
+ *                                 claimedBy = 이 번호를 고른 기기 ID, claimedAt = 고른 시각
  *   judge/{사례id}                { firstO, firstX, finalO, finalX, updatedAt, rev }  O/X 인원
  *                                 rev = 바뀐 횟수(트랜잭션마다 +1) — 화면이 어느 값이 최신인지 고를 때 씀
+ *   board/summary                { abilities: [항목], limits: [항목], conclusion, updatedAt, rev }  정리 판서
+ *                                 항목 = { id, keyword(30자), desc(80자), groups: [1~4] }, 칸마다 10개까지
  *
  *   strength = 장점(능력), limit = 한계 (각 300자까지), updatedAt = 저장 시각(ms 숫자)
  *   보안 규칙: firestore.rules
@@ -34,10 +37,11 @@ const DB = (() => {
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const fs = firebase.firestore();
 
-  const GROUPS = 6;
-  const MEMBERS = 4;
+  const GROUPS = 4;       // common.js GROUP_COUNT 와 같게
+  const MEMBERS = 5;      // common.js MEMBER_COUNT 와 같게
   const MAX_TEXT = 300;   // firestore.rules 의 글자 수 제한과 같게
   const MAX_COUNT = 999;  // firestore.rules 의 인원 제한과 같게
+  const MAX_NAME = 10;    // 이름 (common.js NAME_MAX, firestore.rules 와 같게)
 
   /* ---------- 경로 ---------- */
   const groupsCol = () => fs.collection('groups');
@@ -46,6 +50,7 @@ const DB = (() => {
   const memberRef = (g, m) => membersCol(g).doc(String(m));
   const judgeCol = () => fs.collection('judge');
   const judgeRef = (id) => judgeCol().doc(String(id));
+  const boardRef = () => fs.collection('board').doc('summary');
 
   /* ---------- 도우미 ---------- */
   const range = (n) => Array.from({ length: n }, (_, i) => i + 1);
@@ -122,12 +127,14 @@ const DB = (() => {
 
   /* ---------- 이야기(번호) 고르기 ---------- */
 
-  /** 기기가 모둠의 번호(=이야기)를 고른다. 트랜잭션이라 두 기기가 동시에 눌러도 한 명만 성공.
+  /** 기기가 모둠의 번호를 고르고 이름을 적는다. 트랜잭션이라 두 기기가 동시에 눌러도 한 명만 성공.
+   *  name = 다듬은 이름(common.js cleanName). 이미 내 번호면 이름만 바꾼다.
    *  → {ok:true}
    *  | {ok:false, reason:'taken'}             다른 기기가 이미 고름
    *  | {ok:false, reason:'locked', member:n}  이 기기가 n번에 이미 글을 써서 바꿀 수 없음
    *  이 기기가 고른 다른 번호에 글이 없으면 그 선택은 자동으로 풀린다. */
-  async function claimMember(group, member, deviceId) {
+  async function claimMember(group, member, deviceId, name) {
+    const cleanName = String(name ?? '').trim().slice(0, MAX_NAME);
     const refs = range(MEMBERS).map((m) => memberRef(group, m));
     return fs.runTransaction(async (tx) => {
       const snaps = await Promise.all(refs.map((r) => tx.get(r)));
@@ -142,13 +149,15 @@ const DB = (() => {
 
       mine.forEach((m) => tx.delete(refs[m - 1]));   // 글 없는 예전 선택은 풀기
       if (target?.claimedBy !== deviceId) {
-        tx.set(refs[member - 1], { claimedBy: deviceId, claimedAt: Date.now() }, { merge: true });
+        tx.set(refs[member - 1], { claimedBy: deviceId, claimedAt: Date.now(), name: cleanName }, { merge: true });
+      } else if (target.name !== cleanName) {
+        tx.set(refs[member - 1], { name: cleanName }, { merge: true });  // 이름만 고치기
       }
       return { ok: true };
     });
   }
 
-  /** 선택 풀기 (교사): claimedBy/claimedAt 만 지우고 쓴 글은 남긴다. 글이 없으면 문서를 지운다. */
+  /** 선택 풀기 (교사): claimedBy/claimedAt 만 지우고 쓴 글·이름은 남긴다. 글이 없으면 문서를 지운다. */
   async function releaseMember(group, member) {
     const ref = memberRef(group, member);
     const d = docData(await ref.get());
@@ -197,12 +206,13 @@ const DB = (() => {
     await batch.commit();
   }
 
-  /** 전체 초기화 (1~6모둠 + 모든 members + judge 기록 삭제) */
+  /** 전체 초기화 (모든 모둠 + members + judge 기록 + 정리 판서 삭제) */
   async function resetAll() {
     const batch = fs.batch();
     for (const g of range(GROUPS)) await addGroupDeletes(batch, g);
     const judges = await judgeCol().get();
     judges.forEach((d) => batch.delete(d.ref));
+    batch.delete(boardRef());
     await batch.commit();
   }
 
@@ -250,6 +260,118 @@ const DB = (() => {
     const result = {};
     (await judgeCol().get()).forEach((d) => { result[d.id] = d.data(); });
     return result;
+  }
+
+
+  /* ---------- 정리 판서 (board/summary) ---------- */
+  // 판서 계산 규칙은 db.local.js 와 같다. 칸·글자 수 제한은 firestore.rules 와 같게.
+  const BOARD_COLS = ['abilities', 'limits'];
+  const BOARD_MAX_ITEMS = 10;
+  const BOARD_KEYWORD = 30;
+  const BOARD_DESC = 80;
+  const BOARD_CONCLUSION = 150;
+
+  const normBoard = (d) => ({
+    abilities: Array.isArray(d?.abilities) ? d.abilities : [],
+    limits: Array.isArray(d?.limits) ? d.limits : [],
+    conclusion: typeof d?.conclusion === 'string' ? d.conclusion : '',
+    updatedAt: Number(d?.updatedAt) || 0,
+    rev: Math.max(0, Math.floor(Number(d?.rev) || 0)),
+  });
+  const boardError = (code, msg) => { const e = new Error(msg); e.code = code; return e; };
+  function cleanItem(item, id) {
+    const keyword = String(item?.keyword ?? '').trim().slice(0, BOARD_KEYWORD);
+    if (!keyword) throw boardError('empty', '키워드를 적어 주세요');
+    const groups = [...new Set((item?.groups || []).map(Number))]
+      .filter((g) => Number.isInteger(g) && g >= 1 && g <= GROUPS).sort((a, b) => a - b);
+    return { id, keyword, desc: String(item?.desc ?? '').trim().slice(0, BOARD_DESC), groups };
+  }
+  const newItemId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function findItem(b, id) {
+    for (const col of BOARD_COLS) {
+      const i = b[col].findIndex((x) => x.id === id);
+      if (i >= 0) return { col, i };
+    }
+    return null;
+  }
+  /** 판서 한 번 바꾸기. op:
+   *   {type:'add', col, item}            col = 'abilities' | 'limits', item = {keyword, desc, groups}
+   *   {type:'update', id, col, item}     내용 고치기 (col이 다르면 다른 칸으로 옮김)
+   *   {type:'remove', id}
+   *   {type:'move', id, dir}             dir = -1(위로) | 1(아래로)
+   *   {type:'conclusion', text}          오늘의 핵심 문장
+   *  → 바뀐 판서 (바꿀 게 없으면 null). 칸이 꽉 차면 err.code 'full', 키워드가 없으면 'empty' */
+  function applyBoardOp(cur, op) {
+    const b = { ...cur, abilities: cur.abilities.slice(), limits: cur.limits.slice() };
+    if (op.type === 'conclusion') {
+      const text = String(op.text ?? '').trim().slice(0, BOARD_CONCLUSION);
+      if (text === b.conclusion) return null;
+      b.conclusion = text;
+      return b;
+    }
+    if (op.type === 'add') {
+      if (!BOARD_COLS.includes(op.col)) throw boardError('bad', '알 수 없는 칸');
+      if (b[op.col].length >= BOARD_MAX_ITEMS) throw boardError('full', `한 칸에 ${BOARD_MAX_ITEMS}개까지 적을 수 있어요`);
+      b[op.col].push(cleanItem(op.item, newItemId()));
+      return b;
+    }
+    const at = findItem(b, op.id);
+    if (!at) return null; // 다른 화면에서 이미 지움
+    if (op.type === 'remove') {
+      b[at.col].splice(at.i, 1);
+      return b;
+    }
+    if (op.type === 'move') {
+      const j = at.i + (op.dir < 0 ? -1 : 1);
+      if (j < 0 || j >= b[at.col].length) return null;
+      [b[at.col][at.i], b[at.col][j]] = [b[at.col][j], b[at.col][at.i]];
+      return b;
+    }
+    if (op.type === 'update') {
+      const item = cleanItem(op.item, op.id);
+      const col = BOARD_COLS.includes(op.col) ? op.col : at.col;
+      if (col === at.col) {
+        b[col][at.i] = item;
+      } else {
+        if (b[col].length >= BOARD_MAX_ITEMS) throw boardError('full', `한 칸에 ${BOARD_MAX_ITEMS}개까지 적을 수 있어요`);
+        b[at.col].splice(at.i, 1);
+        b[col].push(item);
+      }
+      return b;
+    }
+    throw boardError('bad', '알 수 없는 바꾸기');
+  }
+
+  /** 정리 판서 읽기 → {abilities, limits, conclusion, updatedAt, rev} */
+  async function getBoard() {
+    return normBoard(docData(await boardRef().get()));
+  }
+
+  /** 정리 판서 바꾸기 (트랜잭션 — 두 화면에서 동시에 고쳐도 서로 덮어쓰지 않음). 인터넷이 끊기면 실패 */
+  async function changeBoard(op) {
+    const ref = boardRef();
+    return fs.runTransaction(async (tx) => {
+      const cur = normBoard(docData(await tx.get(ref)));
+      const next = applyBoardOp(cur, op);
+      if (!next) return cur;
+      next.updatedAt = Date.now();
+      next.rev = cur.rev + 1;
+      tx.set(ref, next);
+      return next;
+    });
+  }
+
+  /** 정리 판서 실시간 지켜보기. callback(판서). 서버 값을 받기 전(끊김)에는 부르지 않는다 */
+  function watchBoard(callback) {
+    let last;
+    const unsub = boardRef().onSnapshot((s) => {
+      if (s.metadata.fromCache && !s.exists) return;
+      last = normBoard(docData(s));
+      callback(last);
+    }, onError);
+    const stop = () => unsub();
+    stop.refresh = async () => { if (last !== undefined) callback(last); };
+    return stop;
   }
 
   /* ---------- 실시간 지켜보기 (onSnapshot) ---------- */
@@ -335,5 +457,8 @@ const DB = (() => {
     changeJudge,
     watchJudge,
     getAllJudges,
+    getBoard,
+    changeBoard,
+    watchBoard,
   };
 })();

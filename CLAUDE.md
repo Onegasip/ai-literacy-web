@@ -1,7 +1,11 @@
 # AI 리터러시 수업 웹앱 — 프로젝트 규칙
 
 초등 6학년 AI 리터러시 수업 "과제의 특성에 따라 AI 활용 여부 판단하기"에서 쓰는 웹앱.
-학생은 모둠별로 이야기를 읽고 AI의 **장점(능력)** 과 **한계**를 찾아 정리하고, 교사는 TV에 결과를 띄워 함께 정리한다.
+학생 20명 = 4모둠 × 5명. 모둠마다 이야기 하나를 맡아(1모둠→이야기1 …) 모둠원 5명이 같은 이야기를 읽고 각자 AI의 **장점(능력)** 과 **한계**를 찾아 쓴 뒤 모둠으로 정리하고, 교사는 TV에 결과를 띄우고 정리 판서 화면에 직접 타자로 정리한다.
+
+## 수업 구조 설정 (한 곳에서 바꾸기)
+- `js/common.js`: `GROUP_COUNT`(4), `MEMBER_COUNT`(5), `GROUP_STORY`(모둠 → 이야기 번호), `CLASS_SIZE`(20), `NAME_MAX`(10)
+- 바꾸면 `js/db.js`·`js/db.local.js`의 `GROUPS`/`MEMBERS`, `firestore.rules`의 `isGroup`/`isMember`도 같이 고친다.
 
 ## 기술 규칙
 - 빌드 도구·프레임워크 없이 **순수 HTML + CSS + JS**. GitHub Pages로 배포한다.
@@ -18,21 +22,26 @@
 - DB 데이터는 `DB.함수()`로만 다루고 Firestore를 직접 쓰지 않는다. db 함수는 모두 `async`.
 - localStorage는 **기기 설정만** `js/common.js`에서 쓴다: 학생 모둠·번호(`setStudent`/`getStudent`), 기기 ID(`getDeviceId`). 다른 파일에서 직접 쓰지 않는다.
 - 실시간 화면은 `DB.watchGroup` / `DB.watchAll` / `DB.watchJudge`(onSnapshot)로 받는다. 반환값은 멈추는 함수, `.refresh()`로 다시 받기.
+- 번호 고르기는 `DB.claimMember(g, m, deviceId, name)` (트랜잭션, 이름도 함께 저장. 이미 내 번호면 이름만 고침).
 - 학생 글 저장은 `DB.saveMember(g, m, data, deviceId)` — claimedBy를 함께 보내고, 선택이 풀렸거나 남의 번호면 규칙이 거절 → `err.code === 'released'` → `leaveReleased()`. my-thought는 저장 직전 `checkClaim`도 확인하고, `watchGroup`으로 풀림을 바로 알아챈다.
 - 판단 O/X는 `DB.changeJudge(caseId, key, ±1, CLASS_SIZE)`(트랜잭션, 한 칸씩)로만 바꾼다. judge.js는 누름을 줄(queue)에 넣고 하나씩 보내며, 저장 중에 온 실시간 값은 `rev`가 큰 것만 쓴다.
+- 정리 판서는 `DB.changeBoard(op)`(트랜잭션, op = add/update/remove/move/conclusion)로만 바꾸고 `DB.watchBoard`로 받는다. 계산 규칙(`applyBoardOp`)은 db.js와 db.local.js가 같다.
 - 저장이 3.5초 넘게 안 끝나면 `slowSaveNotice()`(common.js)가 "인터넷이 끊겼어요…" 안내를 띄운다.
 - 보안 규칙은 `firestore.rules`. 고치면 Firebase 콘솔 → Firestore → 규칙에 붙여넣고 [게시]. 글자 수 제한(300자)·인원 제한(0~999)은 db.js 상수와 맞춘다.
-- members 규칙: 글(strength/limit/updatedAt)을 쓰거나 바꾸는 쓰기는 기존·새 문서의 claimedBy가 둘 다 있고 같을 때만 허용. 새 문서는 이야기 고르기(claimedBy/claimedAt)로만 만든다. 선택 풀기(claimedBy/claimedAt만 지우기)는 허용.
+- members 규칙: 글(strength/limit/updatedAt)을 쓰거나 바꾸는 쓰기는 기존·새 문서의 claimedBy가 둘 다 있고 같을 때만 허용. 새 문서는 번호 고르기(name/claimedBy/claimedAt)로만 만든다. 이름(name, 1~10자)은 고른 기기만 바꾸거나 빈 번호를 새로 고를 때 쓴다. 선택 풀기(claimedBy/claimedAt만 지우기)는 허용.
+- board 규칙: 칸마다 항목 10개, 키워드 30자, 설명 80자, 핵심 문장 150자, 모둠 태그 1~4.
 - 회차(세션) 기능은 없다. 데이터 구조:
 
 ```
-groups/{1~6}                  { strength, limit, updatedAt }   ← 모둠이 정리한 장점/한계
-groups/{1~6}/members/{1~4}    { strength, limit, updatedAt, claimedBy, claimedAt }   ← 학생 개인 생각 + 고른 기기
+groups/{1~4}                  { strength, limit, updatedAt }   ← 모둠이 정리한 장점/한계
+groups/{1~4}/members/{1~5}    { name, strength, limit, updatedAt, claimedBy, claimedAt }   ← 학생 이름·개인 생각 + 고른 기기
 judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt, rev }  ← AI 활용 판단 O/X 인원(처음/최종), rev = 바뀐 횟수
+board/summary                 { abilities:[항목], limits:[항목], conclusion, updatedAt, rev }  ← 교사 정리 판서
+                              항목 = { id, keyword, desc, groups:[1~4] }
 ```
-- 전체 초기화(`DB.resetAll`)와 CSV 내보내기는 모둠 결과 + judge 기록을 모두 포함한다.
+- 전체 초기화(`DB.resetAll`)와 CSV 내보내기는 모둠 결과(이름 포함) + judge 기록 + 정리 판서를 모두 포함한다.
 - 필드: `strength` = 장점(능력, 300자까지), `limit` = 한계(300자까지), `updatedAt` = 저장 시각(ms 숫자). 입력칸 `maxlength`도 300.
-- `claimedBy` = 이야기를 고른 기기 ID, `claimedAt` = 고른 시각. 교사 results 크게 보기의 [선택 풀기]는 이 두 필드만 지우고 글은 남긴다. 모둠 초기화는 선택도 함께 지운다.
+- `name` = 학생 이름(성 빼고, 1~10자, 앞뒤 공백 제거). `claimedBy` = 번호를 고른 기기 ID, `claimedAt` = 고른 시각. 교사 results 크게 보기의 [선택 풀기]는 이 두 필드만 지우고 글은 남긴다. 모둠 초기화는 선택도 함께 지운다.
 - 판단 O/X는 처음·최종 각각 O+X ≤ `CLASS_SIZE`(common.js, 기본 20).
 - (db.local.js에서는 localStorage 키 = 위 경로 앞에 `ailit:`)
 
@@ -67,7 +76,7 @@ judge/{사례id}                 { firstO, firstX, finalO, finalX, updatedAt, re
 - 교사 페이지는 TV에 띄울 발표용 → `<html class="teacher">` + `<body class="teacher">` (html에도 있어야 rem 기준이 커짐). 글씨는 화면 높이에 맞춰 20~30px(1920×1080 ≈ 30px, 1366×768 ≈ 20px).
 - 화면 맞춤 목표: 1024×768, 1366×768, 1920×1080에서 스크롤 없이 핵심 버튼·O/X·6모둠이 보이게. 교사 결과·판단은 `.fit-screen`(100dvh) + `.fit-fill`, 학생 이야기·내 생각은 가로 화면에서 버튼 줄을 아래에 고정.
 - 그리드 칸은 `minmax(0, 1fr)`, 본문은 `overflow-wrap: anywhere` — 띄어쓰기 없는 긴 글로 가로 넘침 방지.
-- **개인정보(이름 등)는 저장하지 않는다.** 모둠 번호 + 학생 번호만 쓴다.
+- **개인정보 최소화**: 학생 이름은 **성 빼고 이름만** 저장한다 (로그인이 없어 주소를 아는 사람은 읽을 수 있음). 수업이 끝나면 CSV로 내보낸 뒤 [전체 초기화]로 지운다. 그 밖의 개인정보는 저장하지 않는다.
 - 학생의 모둠·번호는 localStorage에 저장하고(탭을 닫아도 유지), `js/common.js`의 `setStudent()` / `getStudent()`로만 다룬다.
 - 교사 비밀번호는 `js/common.js`의 `TEACHER_PASSWORD` 상수. 수업용 간단 잠금일 뿐 보안 기능이 아니다.
 

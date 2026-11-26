@@ -1,13 +1,14 @@
 rules_version = '2';
 
 // AI 리터러시 수업 웹앱 — Firestore 보안 규칙
-// 허용 경로: groups/{1~6}, groups/{1~6}/members/{1~4}, judge/{사례id}
+// 허용 경로: groups/{1~4}, groups/{1~4}/members/{1~5}, judge/{사례id}, board/summary
+// 모둠 수·인원을 바꾸면 isGroup / isMember 와 js/common.js, js/db.js 를 같이 고친다.
 // 그 외 경로는 규칙이 없으므로 전부 차단된다.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isGroup(g)  { return g in ['1', '2', '3', '4', '5', '6']; }
-    function isMember(m) { return m in ['1', '2', '3', '4']; }
+    function isGroup(g)  { return g in ['1', '2', '3', '4']; }
+    function isMember(m) { return m in ['1', '2', '3', '4', '5']; }
     function isCaseId(id) { return id.matches('^[A-Za-z0-9_-]{1,40}$'); }
 
     function isText(v)  { return v is string && v.size() <= 300; }
@@ -26,11 +27,16 @@ service cloud.firestore {
 
     function isDeviceId(v) { return v is string && v.matches('^[A-Za-z0-9-]{8,64}$'); }
 
-    // 개인 생각 문서: 글(strength, limit, updatedAt) + 고른 기기(claimedBy, claimedAt)
-    // 이야기만 고른 상태({claimedBy, claimedAt})도 있으므로 각 필드는 있을 때만 검사
+    function isName(v) { return v is string && v.size() >= 1 && v.size() <= 10; }  // 이름(성 빼고)
+
+    // 개인 생각 문서: 이름 + 글(strength, limit, updatedAt) + 고른 기기(claimedBy, claimedAt)
+    // 번호만 고른 상태({name, claimedBy, claimedAt})도 있으므로 각 필드는 있을 때만 검사
+    // 번호를 고른 상태(claimedBy 있음)면 이름도 꼭 있어야 한다
     function validMember() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['strength', 'limit', 'updatedAt', 'claimedBy', 'claimedAt'])
+      return d.keys().hasOnly(['name', 'strength', 'limit', 'updatedAt', 'claimedBy', 'claimedAt'])
+          && (!('name' in d) || isName(d.name))
+          && (!('claimedBy' in d) || ('name' in d))
           && (!('strength' in d) || isText(d.strength))
           && (!('limit' in d) || isText(d.limit))
           && (!('updatedAt' in d) || isTime(d.updatedAt))
@@ -59,9 +65,16 @@ service cloud.firestore {
           && ('claimedBy' in request.resource.data)
           && request.resource.data.claimedBy == resource.data.claimedBy;
     }
-    // 새 문서는 이야기 고르기({claimedBy, claimedAt})로만 만든다 (글이 든 문서를 바로 만들 수 없음)
+    // 새 문서는 번호 고르기({name, claimedBy, claimedAt})로만 만든다 (글이 든 문서를 바로 만들 수 없음)
     function createsClaimOnly() {
       return !request.resource.data.keys().hasAny(['strength', 'limit', 'updatedAt']);
+    }
+    // 이름을 바꾸는 쓰기는 이 번호를 고른 기기만 (같은 기기) 또는 비어 있는 번호를 새로 고를 때만
+    function writesName() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny(['name']);
+    }
+    function claimingNow() {
+      return !('claimedBy' in resource.data) && ('claimedBy' in request.resource.data);
     }
 
     // O/X 기록 문서: firstO, firstX, finalO, finalX, updatedAt (+ rev: 바뀐 횟수)
@@ -88,9 +101,45 @@ service cloud.firestore {
         allow list: if isGroup(g);
         allow create: if isGroup(g) && isMember(m) && validMember() && createsClaimOnly();
         allow update: if isGroup(g) && isMember(m) && validMember() && claimKept()
-                      && (!writesThought() || sameClaimer());
+                      && (!writesThought() || sameClaimer())
+                      && (!writesName() || sameClaimer() || claimingNow());
         allow delete: if isGroup(g);              // 초기화, 글 없는 선택 바꾸기, 남은 문서 정리
       }
+    }
+
+    // 정리 판서 board/summary: 칸마다 항목 10개까지, 키워드 30자·설명 80자·핵심 문장 150자, 모둠 태그 1~4
+    // (규칙에는 반복문이 없어서 0~9번 항목을 하나씩 검사한다)
+    function validItem(list, i) {
+      return i >= list.size() || (
+        list[i] is map
+        && list[i].keys().hasOnly(['id', 'keyword', 'desc', 'groups'])
+        && list[i].keys().hasAll(['id', 'keyword', 'desc', 'groups'])
+        && list[i].id is string && list[i].id.size() >= 1 && list[i].id.size() <= 24
+        && list[i].keyword is string && list[i].keyword.size() >= 1 && list[i].keyword.size() <= 30
+        && list[i].desc is string && list[i].desc.size() <= 80
+        && list[i].groups is list && list[i].groups.size() <= 4 && list[i].groups.hasOnly([1, 2, 3, 4])
+      );
+    }
+    function validItems(list) {
+      return list is list && list.size() <= 10
+          && validItem(list, 0) && validItem(list, 1) && validItem(list, 2) && validItem(list, 3) && validItem(list, 4)
+          && validItem(list, 5) && validItem(list, 6) && validItem(list, 7) && validItem(list, 8) && validItem(list, 9);
+    }
+    function validBoard() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['abilities', 'limits', 'conclusion', 'updatedAt', 'rev'])
+          && d.keys().hasAll(['abilities', 'limits', 'conclusion', 'updatedAt', 'rev'])
+          && validItems(d.abilities)
+          && validItems(d.limits)
+          && d.conclusion is string && d.conclusion.size() <= 150
+          && isTime(d.updatedAt)
+          && d.rev is int && d.rev >= 0;
+    }
+
+    match /board/{id} {
+      allow get, list: if true;
+      allow create, update: if id == 'summary' && validBoard();
+      allow delete: if true;                     // 전체 초기화
     }
 
     // AI 활용 판단 O/X 기록
